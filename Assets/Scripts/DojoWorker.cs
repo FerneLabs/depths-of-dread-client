@@ -30,6 +30,8 @@ public class DojoWorker : MonoBehaviour
         worldManager.synchronizationMaster.OnSynchronized.AddListener(HandleSync);
         worldManager.synchronizationMaster.OnEntitySpawned.AddListener(HandleSpawn);
 
+        // Debug.Log($"RPC URL: {dojoConfig.rpcUrl}");
+        // Debug.Log($"World Address: {dojoConfig.worldAddress.Hex()}");
         CreatePlayer("jojo");
     }
 
@@ -73,7 +75,7 @@ public class DojoWorker : MonoBehaviour
 
     void HandleSpawn(GameObject spawnedEntity)
     {
-        Debug.Log($"Entity Spawned: {spawnedEntity}");
+        Debug.Log($"Entity Spawned: {spawnedEntity.name}");
     }
 
     void HandleSync(List<GameObject> syncedObjects)
