@@ -17,14 +17,14 @@ namespace Dojo
 
         async void Awake()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
-            wasmClient = new ToriiWasmClient(dojoConfig.toriiUrl, dojoConfig.rpcUrl,
-                                                dojoConfig.relayWebrtcUrl, dojoConfig.worldAddress);
-            await wasmClient.CreateClient();
-#else
-            toriiClient = new ToriiClient(dojoConfig.toriiUrl, dojoConfig.rpcUrl,
+            #if UNITY_WEBGL && !UNITY_EDITOR
+                wasmClient = new ToriiWasmClient(dojoConfig.toriiUrl, dojoConfig.rpcUrl,
+                                                    dojoConfig.relayWebrtcUrl, dojoConfig.worldAddress);
+                await wasmClient.CreateClient();
+            #else
+                toriiClient = new ToriiClient(dojoConfig.toriiUrl, dojoConfig.rpcUrl,
                                             dojoConfig.relayUrl, dojoConfig.worldAddress);
-#endif
+            #endif
 
             /*  fetch entities from the world
                 TODO: maybe do in the start function of the SynchronizationMaster?
@@ -61,14 +61,14 @@ namespace Dojo
         */
         public GameObject Entity(string name)
         {
-            var entity = transform.Find(name);
+            var entity = GameObject.Find(name);
             if (entity == null)
             {
                 Debug.LogError($"Entity {name} not found");
                 return null;
             }
 
-            return entity.gameObject;
+            return entity;
         }
 
         // Return all children entities.

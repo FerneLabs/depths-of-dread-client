@@ -99,15 +99,6 @@
       },
       "url": "https://packages.unity.com"
     },
-    "com.unity.adaptiveperformance": {
-      "version": "5.1.0",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.profiling.core": "1.0.2"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.burst": {
       "version": "1.8.18",
       "depth": 3,
@@ -159,16 +150,6 @@
         "com.unity.2d.aseprite": "1.1.6"
       }
     },
-    "com.unity.feature.mobile": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "builtin",
-      "dependencies": {
-        "com.unity.mobile.android-logcat": "1.4.3",
-        "com.unity.adaptiveperformance": "5.1.0",
-        "com.unity.mobile.notifications": "2.4.0"
-      }
-    },
     "com.unity.ide.rider": {
       "version": "3.0.34",
       "depth": 0,
@@ -201,22 +182,6 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.unity.mobile.android-logcat": {
-      "version": "1.4.3",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.mobile.notifications": {
-      "version": "2.4.0",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.modules.androidjni": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.multiplayer.center": {
       "version": "1.0.0",
       "depth": 0,
@@ -235,13 +200,6 @@
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.2.1",
       "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.profiling.core": {
-      "version": "1.0.2",
-      "depth": 2,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

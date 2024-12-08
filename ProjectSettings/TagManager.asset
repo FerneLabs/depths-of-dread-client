@@ -6,6 +6,11 @@ TagManager:
   tags:
   - MainScreen
   - GameOverlay
+  - UsernameText
+  - ProfileButton
+  - ConnectButton
+  - LogoutButton
+  - LeaderboardScreen
   layers:
   - Default
   - TransparentFX

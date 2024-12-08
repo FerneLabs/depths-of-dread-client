@@ -15,8 +15,19 @@ public abstract record Direction() : Enum {
     public record Right() : Direction;
     public record Up() : Direction;
     public record Down() : Direction;
-}
 
+    public static Enum FromIndex(Type baseType, int index)
+    {
+        var nestedTypes = baseType.GetNestedTypes(BindingFlags.Public);
+        if (index < 0 || index >= nestedTypes.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index), "Index is out of range.");
+        }
+
+        var type = nestedTypes.OrderBy(t => t.MetadataToken).ElementAt(index);
+        return (Enum)Activator.CreateInstance(type);
+    }
+}
 
 // Model definition for `depths_of_dread::models::GameFloor` model
 public class depths_of_dread_GameFloor : ModelInstance {
