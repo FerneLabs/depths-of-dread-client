@@ -26,7 +26,7 @@ namespace Dojo
 
         public UnityEvent<List<GameObject>> OnSynchronized;
         public UnityEvent<GameObject> OnEntitySpawned;
-        public UnityEvent<ModelInstance> OnEntityUpdated;
+        public UnityEvent<ModelInstance> OnModelUpdated;
         public UnityEvent<ModelInstance> OnEventMessage;
 
         // Awake is called when the script instance is being loaded.
@@ -43,11 +43,11 @@ namespace Dojo
         // Fetch all entities from the dojo world and spawn them.
         public async Task<int> SynchronizeEntities()
         {
-            #if UNITY_WEBGL && !UNITY_EDITOR
-                var entities = await worldManager.wasmClient.Entities(worldManager.dojoConfig.query);
-            #else
-                var entities = await Task.Run(() => worldManager.toriiClient.Entities(worldManager.dojoConfig.query));
-            #endif
+#if UNITY_WEBGL && !UNITY_EDITOR
+            var entities = await worldManager.wasmClient.Entities(worldManager.dojoConfig.query);
+#else
+            var entities = await Task.Run(() => worldManager.toriiClient.Entities(worldManager.dojoConfig.query));
+#endif
 
             var entityGameObjects = new List<GameObject>();
             foreach (var entity in entities)
@@ -123,7 +123,7 @@ namespace Dojo
 
                 // update component with new model data
                 ((ModelInstance)component).OnUpdate(entityModel);
-                OnEntityUpdated?.Invoke(model);
+                OnModelUpdated?.Invoke(model);
             }
         }
 

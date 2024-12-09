@@ -11,6 +11,9 @@ TagManager:
   - ConnectButton
   - LogoutButton
   - LeaderboardScreen
+  - ConnectButtonLeaderboard
+  - ProfileButtonLeaderboard
+  - LogoutButtonLeaderboard
   layers:
   - Default
   - TransparentFX

@@ -36,21 +36,9 @@ public class DojoWorker : MonoBehaviour
         // gameFloorText = GameObject.FindGameObjectWithTag("GameFloorText").GetComponent<TMP_Text>();
 
         worldManager.synchronizationMaster.OnEntitySpawned.AddListener(HandleSpawn);
-        worldManager.synchronizationMaster.OnEntityUpdated.AddListener(HandleUpdate);
+        worldManager.synchronizationMaster.OnModelUpdated.AddListener(HandleUpdate);
     }
 
-    void SetActive(string[] tags, bool enable)
-    {
-        foreach (var tag in tags)
-        {
-            var gameObject = GameObject.FindGameObjectWithTag(tag);
-            // Fix - Cannot find elements that are disabled
-            if (gameObject != null)
-            {
-                gameObject.SetActive(enable);
-            } 
-        }
-    }
     public async void SimulateControllerConnection(string username) {
         provider = new JsonRpcClient(dojoConfig.rpcUrl);
         account = new Account(
@@ -67,8 +55,8 @@ public class DojoWorker : MonoBehaviour
         account = null;
         playerEntity = null;
 
-        SetActive(new string[] {"ProfileButton", "LogoutButton"}, false);
-        SetActive(new string[] {"ConnectButton"}, true);
+        UIManager.instance.SetActive(new string[] {"ProfileButton", "LogoutButton"}, false);
+        UIManager.instance.SetActive(new string[] {"ConnectButton"}, true);
     }
 
     public async Task<bool> CreatePlayer(string username) {
@@ -122,7 +110,7 @@ public class DojoWorker : MonoBehaviour
         switch (updatedModel.GetType().Name) {
             // Player Entity Handlers
             case "depths_of_dread_PlayerData":
-                InitIfNot("player");
+                InitEntity("player");
                 OnPlayerDataUpdate();
                 break;
             case "depths_of_dread_PlayerState":
@@ -158,7 +146,7 @@ public class DojoWorker : MonoBehaviour
         }
     }
 
-    void InitIfNot(string entitySelector) 
+    void InitEntity(string entitySelector) 
     {
         var playerState = playerEntity == null ? null : playerEntity.GetComponent<depths_of_dread_PlayerState>();
         var playerKey = account == null ? null : GetPoseidonHash(account.Address);
@@ -166,6 +154,8 @@ public class DojoWorker : MonoBehaviour
         var pEntity = GameObject.Find(playerKey);
         var gEntity = GameObject.Find(gameKey);
         
+        // Only Init if the local entity has not been initialized 
+        // and if the entity matches the current player hashed key
         if (entitySelector == "player" && playerEntity == null)
         {
             if (pEntity != null)
@@ -197,14 +187,11 @@ public class DojoWorker : MonoBehaviour
         var playerData = playerEntity.GetComponent<depths_of_dread_PlayerData>();
         if (playerData == null) { return; }
 
-        SetActive(new string[] {"ProfileButton", "LogoutButton"}, true);
-        SetActive(new string[] {"ConnectButton"}, false);
-
-        usernameText = GameObject.FindGameObjectWithTag("UsernameText")?.GetComponent<TMP_Text>();
         string usernameHex = playerData.username.Hex();
-        if (usernameText != null) {
-            usernameText.text = HexToASCII(usernameHex);
-        }
+
+        UIManager.instance.SetActive(new string[] {"ProfileButton", "LogoutButton"}, true);
+        UIManager.instance.SetActive(new string[] {"ConnectButton"}, false);
+        UIManager.instance.SetText("UsernameText", HexToASCII(usernameHex));
 
         Debug.Log($"Updated {playerEntity} data");
     }
@@ -213,11 +200,9 @@ public class DojoWorker : MonoBehaviour
         var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
         if (playerState == null) { return; }
 
-        gameIDText.text = $"Game ID: {playerState.game_id}";
-        gameFloorText.text = $"Floor: {playerState.current_floor}";
-        gameFloorText.text = $"Floor: {playerState.current_floor}";
-        playerCoinsText.text = $"Coins: {playerState.coins}";
-        playerPositionText.text = $"Position: {playerState.position.x}, {playerState.position.y}";
+        UIManager.instance.SetText("GameIDText", $"Game ID: {playerState.game_id}");
+        UIManager.instance.SetText("GameFloorText", $"Floor: {playerState.current_floor}");
+        UIManager.instance.SetText("PlayerCoinsText", $"CoinsD: {playerState.coins}");
 
         Debug.Log($"Updated {playerEntity} state");
     }
