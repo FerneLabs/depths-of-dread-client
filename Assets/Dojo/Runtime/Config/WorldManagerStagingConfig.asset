@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: faed63f2427f3ed83a42d16bb3e73e6d, type: 3}
   m_Name: WorldManagerStagingConfig
   m_EditorClassIdentifier: 
-  toriiUrl: http://localhost:8080
-  rpcUrl: http://localhost:5050
-  relayUrl: /ip4/127.0.0.1/tcp/9090
+  toriiUrl: https://api.cartridge.gg/x/dod-dev/torii
+  rpcUrl: https://api.cartridge.gg/x/dod-dev/katana
+  relayUrl: /dns4/api.cartridge.gg/tcp/443/x-parity-wss/%2Fx%2Fdod-dev%2Ftorii%2Fwss
   relayWebrtcUrl: 
   worldAddress:
-    hex: 0x0000000000000000000000000000000000000000000000000000000000000000
+    hex: 0x03cae44b2932cf573cad525396df80a09a6897aafc6b9cb2deb5e5b68e5e38e9
   query:
     limit: 100
     offset: 0
