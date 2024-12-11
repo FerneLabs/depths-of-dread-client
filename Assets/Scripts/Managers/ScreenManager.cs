@@ -5,7 +5,7 @@ using UnityEngine;
 public class ScreenManager : MonoBehaviour
 {
     public static ScreenManager instance;
-
+    public string currentScreen = "MainScreen";
     [SerializeField] GameObject[] screens;
 
     private void Awake() 
@@ -26,5 +26,6 @@ public class ScreenManager : MonoBehaviour
         {
             screen.SetActive(screen.CompareTag(screenTag)); // Enable only screen matching received tag
         }
+        currentScreen = screenTag;
     }
 }

@@ -6,14 +6,13 @@ using UnityEngine;
 public class MovementScript : MonoBehaviour
 {
     public float moveSpeed = 5f; // Speed for smooth movement between tiles
-    public Vector2Int gridSize = new Vector2Int(32, 32); // Tile size in pixels
-    private bool isMoving = false; // Check if movement is in progress
-    private Vector3 targetPosition; // Target position for each tile
+    Vector3 initialPositionOffset;
+    Vector3 targetPosition; // Target position for each tile
+    bool isMoving = false; // Check if movement is in progress
 
     private void Start()
     {
-        // Set initial position to nearest grid point
-        targetPosition = transform.position;
+        initialPositionOffset = transform.localPosition;
     }
 
     private void Update()
@@ -21,36 +20,20 @@ public class MovementScript : MonoBehaviour
         // Move towards the target position
         if (isMoving)
         {
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
-            if (Vector3.Distance(transform.position, targetPosition) < 0.01f)
+            transform.localPosition = Vector3.MoveTowards(transform.localPosition, targetPosition, moveSpeed * Time.deltaTime);
+            if (Vector3.Distance(transform.localPosition, targetPosition) < 0.01f)
             {
                 // Snap to position and stop moving
-                transform.position = targetPosition;
+                transform.localPosition = targetPosition;
                 isMoving = false;
             }
         }
     }
 
-    public void Move(int direction)
+    public void Move(Vector3 position)
     {
         if (isMoving) { return; }
-        switch (direction)
-        {
-            case 0: 
-                targetPosition = transform.position + Vector3.up;
-                break;
-            case 1: 
-                targetPosition = transform.position + Vector3.right;
-                break;
-            case 2: 
-                targetPosition = transform.position + Vector3.left;
-                break;
-            case 3: 
-                targetPosition = transform.position + Vector3.down;
-                break;
-            default:
-                break;
-        }
+        targetPosition = position + initialPositionOffset;
         isMoving = true;
     }
 }

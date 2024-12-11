@@ -4,20 +4,28 @@
 TagManager:
   serializedVersion: 3
   tags:
+  - ----- Screens -----
   - MainScreen
-  - GameOverlay
-  - UsernameText
-  - ProfileButton
-  - ConnectButton
-  - LogoutButton
   - LeaderboardScreen
-  - ConnectButtonLeaderboard
-  - ProfileButtonLeaderboard
-  - LogoutButtonLeaderboard
+  - GameOverlay
+  - ----- Main Screen -----
+  - MS-ProfileButton
+  - MS-ConnectButton
+  - MS-UsernameText
+  - MS-LogoutButton
+  - ----- Leaderboard Screen -----
+  - LB-ProfileButton
+  - LB-ConnectButton
+  - LB-UsernameText
+  - LB-LogoutButton
   - LB-Item-PositionText
   - LB-Item-UsernameText
   - LB-Item-ScoreText
   - LB-Item-TimeText
+  - ----- Game Screen -----
+  - GS-GameFloorText
+  - GS-CoinsText
+  - GS-UsernameText
   layers:
   - Default
   - TransparentFX

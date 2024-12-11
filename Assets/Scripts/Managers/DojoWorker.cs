@@ -20,210 +20,235 @@ public class DojoWorker : MonoBehaviour
     public Actions actions;
     public JsonRpcClient provider;
     private Account account;
-    private TMP_Text usernameText;
-    private TMP_Text playerPositionText;
-    private TMP_Text playerCoinsText;
-    private TMP_Text gameIDText;
-    private TMP_Text gameFloorText;
     private GameObject playerEntity;
     private GameObject gameEntity;
 
     void Start()
     {
-        // playerPositionText = GameObject.FindGameObjectWithTag("PlayerPositionText").GetComponent<TMP_Text>();
-        // playerCoinsText = GameObject.FindGameObjectWithTag("PlayerCoinsText").GetComponent<TMP_Text>();
-        // gameIDText = GameObject.FindGameObjectWithTag("GameIDText").GetComponent<TMP_Text>();
-        // gameFloorText = GameObject.FindGameObjectWithTag("GameFloorText").GetComponent<TMP_Text>();
-
         worldManager.synchronizationMaster.OnEntitySpawned.AddListener(HandleSpawn);
         worldManager.synchronizationMaster.OnModelUpdated.AddListener(HandleUpdate);
     }
 
-    public async void SimulateControllerConnection(string username) {
+    public async void SimulateControllerConnection(string username)
+    {
         provider = new JsonRpcClient(dojoConfig.rpcUrl);
         account = new Account(
-            provider, 
-            new SigningKey(dojoWorkerData.masterPrivateKey), 
+            provider,
+            new SigningKey(dojoWorkerData.masterPrivateKey),
             new FieldElement(dojoWorkerData.masterAddress)
         );
-    
-        await CreatePlayer(username);
+
+        var txnHash = await CreatePlayer(username);
+        await provider.WaitForTransaction(txnHash);
     }
 
-    public void SimulateControllerDisconnection() {
+    public void SimulateControllerDisconnection()
+    {
         provider = new JsonRpcClient(dojoConfig.rpcUrl);
         account = null;
         playerEntity = null;
 
-        UIManager.instance.SetActive(new string[] {"ProfileButton", "LogoutButton"}, false);
-        UIManager.instance.SetActive(new string[] {"ConnectButton"}, true);
+        UIManager.instance.HandleDisconnection();
     }
 
-    public async Task<bool> CreatePlayer(string username) {
+    public async Task<FieldElement> CreatePlayer(string username)
+    {
         BigInteger encodedUsername = ASCIIToBigInt(username);
-        await actions.create_player(account, new FieldElement(encodedUsername));
-        return true;
+        return await actions.create_player(account, new FieldElement(encodedUsername));
     }
 
-    public async void CreateGame() {
-        await actions.create_game(account);
+    public async void CreateGame()
+    {
+        if (account == null)
+        {
+            SimulateControllerConnection("test_username");
+            return;
+        }
+
+        var txnHash = await actions.create_game(account);
+        await provider.WaitForTransaction(txnHash);
+
+        if (gameEntity != null)
+        {
+            ScreenManager.instance.SetActiveScreen("GameOverlay");
+        }
+        else
+        {
+            Debug.LogWarning("Game entity is null");
+        }
     }
 
-    public async void EndGame() {
+    public async void EndGame()
+    {
         await actions.end_game(account);
+        UIManager.instance.HandleExitGame();
     }
 
-    public async void Move(int direction) {
+    public async void Move(int direction)
+    {
         Direction dir = (Direction)Direction.FromIndex(typeof(Direction), direction);
         await actions.move(account, dir);
     }
 
-    void HandleSpawn(GameObject spawnedEntity)
+    void HandleSpawn(GameObject spownedEntity)
     {
-        var playerState = playerEntity == null ? null : playerEntity.GetComponent<depths_of_dread_PlayerState>();
-        var playerKey = account == null ? null : GetPoseidonHash(account.Address);
-        var gameKey = playerState == null ? null : GetPoseidonHash(new FieldElement(playerState.game_id));
-        
-        if (spawnedEntity == null) { return; }
-        
-        if (spawnedEntity.name == playerKey)
-        {
-            playerEntity = spawnedEntity;
-            OnPlayerDataUpdate();
-            OnPlayerStateUpdate();
-            OnPlayerPowerUpsUpdate();
-
-            Debug.Log($"Initialized playerEntity {playerEntity}");
-        }
-        
-        if (spawnedEntity.name == gameKey) 
-        {
-            gameEntity = spawnedEntity;
-            OnGameDataUpdate();
-            OnGameFloorUpdate();
-            OnGameCoinsUpdate();
-        }  
+        if (account == null) { return; }
+        SyncLocalEntities();
     }
 
     void HandleUpdate(ModelInstance updatedModel)
     {
-        switch (updatedModel.GetType().Name) {
-            // Player Entity Handlers
-            case "depths_of_dread_PlayerData":
-                InitEntity("player");
-                OnPlayerDataUpdate();
-                break;
-            case "depths_of_dread_PlayerState":
-                //InitIfNot("player");
-                OnPlayerStateUpdate();
-                break;
-            case "depths_of_dread_PlayerPowerUps":
-                //InitIfNot("player");
-                OnPlayerPowerUpsUpdate();
-                break;
-
-            // Game Entity Handlers
-            case "depths_of_dread_GameData":
-                //InitIfNot("game");
-                OnGameDataUpdate();
-                break;
-            case "depths_of_dread_GameFloor":
-                //InitIfNot("game");
-                OnGameFloorUpdate();
-                break;
-            case "depths_of_dread_GameCoins":
-                //InitIfNot("game");
-                OnGameCoinsUpdate();
-                break;
-            case "depths_of_dread_GameObstacles":
-                //InitIfNot("game");
-                OnGameObstaclesUpdate();
-                break;
-
-            default:
-                Debug.LogWarning($"Received unknown model type: {updatedModel.GetType().Name}");
-                break;
-        }
-    }
-
-    void InitEntity(string entitySelector) 
-    {
-        var playerState = playerEntity == null ? null : playerEntity.GetComponent<depths_of_dread_PlayerState>();
-        var playerKey = account == null ? null : GetPoseidonHash(account.Address);
-        var gameKey = playerState == null ? null : GetPoseidonHash(new FieldElement(playerState.game_id));
-        var pEntity = GameObject.Find(playerKey);
-        var gEntity = GameObject.Find(gameKey);
-        
-        // Only Init if the local entity has not been initialized 
-        // and if the entity matches the current player hashed key
-        if (entitySelector == "player" && playerEntity == null)
+        // Player Entity Handlers
+        SyncLocalEntities();
+        if (playerEntity != null)
         {
-            if (pEntity != null)
+            switch (updatedModel.GetType().Name)
             {
-                playerEntity = pEntity;
-                OnPlayerDataUpdate();
-                OnPlayerStateUpdate();
-                OnPlayerPowerUpsUpdate();
-
-                Debug.Log($"Initialized playerEntity {playerEntity}");
+                case "depths_of_dread_PlayerData":
+                    OnPlayerDataUpdate();
+                    break;
+                case "depths_of_dread_PlayerState":
+                    OnPlayerStateUpdate();
+                    break;
+                case "depths_of_dread_PlayerPowerUps":
+                    OnPlayerPowerUpsUpdate();
+                    break;
+                default:
+                    break;
             }
         }
 
-        if (entitySelector == "game" && gameEntity == null)
+        // When running SyncLocalEntities() for the first time, PlayerState is not yet defined, making game entity null.
+        // We need to run entity sync again to initialize game entity with latest PlayerState.game_id value.
+
+        // Game Entity Handlers
+        SyncLocalEntities();
+        if (gameEntity != null)
         {
-            if (gEntity != null) 
+            switch (updatedModel.GetType().Name)
             {
-                gameEntity = gEntity;
-                OnGameDataUpdate();
-                OnGameFloorUpdate();
-                OnGameCoinsUpdate();
-            } 
+                case "depths_of_dread_GameData":
+                    OnGameDataUpdate();
+                    break;
+                case "depths_of_dread_GameFloor":
+                    OnGameFloorUpdate();
+                    break;
+                case "depths_of_dread_GameCoins":
+                    OnGameCoinsUpdate();
+                    break;
+                case "depths_of_dread_GameObstacles":
+                    OnGameObstaclesUpdate();
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
-    void OnPlayerDataUpdate() {
+    void SyncLocalEntities()
+    {
+        var playerKey = account == null ? null : GetPoseidonHash(account.Address);
+        var pEntity = GameObject.Find(playerKey);
+
+        // and if the entity matches the current player hashed key
+        if (pEntity != null && pEntity != playerEntity)
+        {
+            playerEntity = pEntity;
+            OnPlayerDataUpdate();
+            OnPlayerStateUpdate();
+            OnPlayerPowerUpsUpdate();
+
+            Debug.Log($"Synced playerEntity {playerEntity}");
+        }
+
+        var playerState = playerEntity == null ? null : playerEntity.GetComponent<depths_of_dread_PlayerState>();
+        var gameKey = playerState == null ? null : GetPoseidonHash(new FieldElement(playerState.game_id));
+        var gEntity = GameObject.Find(gameKey);
+
+        if (gEntity != null && gEntity != gameEntity)
+        {
+            gameEntity = gEntity;
+            OnGameDataUpdate();
+            OnGameFloorUpdate();
+            OnGameCoinsUpdate();
+
+            Debug.Log($"Synced gameEntity {gameEntity}");
+        }
+    }
+
+    void OnPlayerDataUpdate()
+    {
         if (playerEntity == null) { Debug.Log("Player entity is null"); return; }
 
         var playerData = playerEntity.GetComponent<depths_of_dread_PlayerData>();
         if (playerData == null) { return; }
 
         string usernameHex = playerData.username.Hex();
+        UIManager.instance.HandleConnection(HexToASCII(usernameHex));
 
-        UIManager.instance.SetActive(new string[] {"ProfileButton", "LogoutButton"}, true);
-        UIManager.instance.SetActive(new string[] {"ConnectButton"}, false);
-        UIManager.instance.SetText("UsernameText", HexToASCII(usernameHex));
-
-        Debug.Log($"Updated {playerEntity} data");
+        Debug.Log($"Updated player data");
     }
 
-    void OnPlayerStateUpdate() {
+    void OnPlayerStateUpdate()
+    {
         var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
-        if (playerState == null) { return; }
+        var playerData = playerEntity.GetComponent<depths_of_dread_PlayerData>();
+        if (playerState == null || playerData == null) { return; }
 
-        UIManager.instance.SetText("GameIDText", $"Game ID: {playerState.game_id}");
-        UIManager.instance.SetText("GameFloorText", $"Floor: {playerState.current_floor}");
-        UIManager.instance.SetText("PlayerCoinsText", $"CoinsD: {playerState.coins}");
+        // Redirect to Game screen if player has an ongoing game
+        if (playerState.game_id != 0 && ScreenManager.instance.currentScreen != "GameOverlay")
+        {
+            ScreenManager.instance.SetActiveScreen("GameOverlay");
+        }
 
-        Debug.Log($"Updated {playerEntity} state");
+        if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay") {
+            // Gameover is triggered
+            gameEntity = null;
+            UIManager.instance.HandleGameover();
+            return;
+        }
+
+        // Update UI only if we are in Game screen
+        if (ScreenManager.instance.currentScreen != "GameOverlay")
+        {
+            return;
+        }
+
+        UIManager.instance.HandleStateUpdate(playerData, playerState);
+        Debug.Log($"Updated player state");
     }
 
-    void OnPlayerPowerUpsUpdate() {
-        Debug.Log($"Updated {playerEntity} powerups");
+    void OnPlayerPowerUpsUpdate()
+    {
+        Debug.Log($"Updated player powerups");
     }
 
-    void OnGameDataUpdate() {
-        Debug.Log($"Updated {gameEntity} data");
+    void OnGameDataUpdate()
+    {
+
+        Debug.Log($"Updated game data");
     }
 
-    void OnGameFloorUpdate() {
-        Debug.Log($"Updated {gameEntity} floor");
+    void OnGameFloorUpdate()
+    {
+        var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
+        
+        if (gameFloor == null) { Debug.Log("Game floor is null"); return; }
+        if (gameFloor.game_id != playerState.game_id) { throw new Exception("Game floor ID does not match with playerState ID"); }
+
+        Debug.Log($"Going to render floor for ID {gameFloor.game_id}, size {gameFloor.size.x + 1}x{gameFloor.size.y + 1}");
+        UIManager.instance.RenderGameGrid(gameFloor);
+        Debug.Log($"Updated game floor");
     }
 
-    void OnGameCoinsUpdate() {
-        Debug.Log($"Updated {gameEntity} coins");
+    void OnGameCoinsUpdate()
+    {
+        Debug.Log($"Updated game coins");
     }
 
-    void OnGameObstaclesUpdate() {
-        Debug.Log($"Updated {gameEntity} obstacles");
+    void OnGameObstaclesUpdate()
+    {
+        Debug.Log($"Updated game obstacles");
     }
 }
