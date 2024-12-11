@@ -16,6 +16,17 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void SetActive(GameObject[] gameObjects, bool enable)
+    {
+        foreach (var gameObject in gameObjects)
+        {
+            foreach (var element in uiElements)
+            {
+                if (element == gameObject) element.SetActive(enable);
+            }
+        }
+    }
+
     public void SetActive(string[] tags, bool enable)
     {
         foreach (var tag in tags)

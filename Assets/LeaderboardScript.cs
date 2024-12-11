@@ -8,6 +8,7 @@ public class LeaderboardScript : MonoBehaviour
 {
     [SerializeField] WorldManager worldManager;
     [SerializeField] GameObject leaderboardItemPrefab;
+    [SerializeField] GameObject leaderboardItemDefault;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -41,7 +42,10 @@ public class LeaderboardScript : MonoBehaviour
         // Shorten to only 20 entries
         gameDatas = gameDatas.Length > 20 ? gameDatas[..20] : gameDatas;  
 
-        // TODO: Add prefab for empty entries message
+        if (gameDatas.Length > 0) 
+        {
+            leaderboardItemDefault.SetActive(false);
+        }
         
         for (int i = 0; i < gameDatas.Length; i++)
         {
