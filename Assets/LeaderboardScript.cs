@@ -9,8 +9,8 @@ public class LeaderboardScript : MonoBehaviour
     [SerializeField] WorldManager worldManager;
     [SerializeField] GameObject leaderboardItemPrefab;
     [SerializeField] GameObject leaderboardItemDefault;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+
+    public void RenderLeaderboard()
     {
         var leaderboardEntries = worldManager.Entities<depths_of_dread_GameData>();
         var playerEntries = worldManager.Entities<depths_of_dread_PlayerData>();
@@ -46,7 +46,9 @@ public class LeaderboardScript : MonoBehaviour
         {
             leaderboardItemDefault.SetActive(false);
         }
-        
+
+        // Clear leaderboard before populating
+        ResetEntries();
         for (int i = 0; i < gameDatas.Length; i++)
         {
             var instance = Instantiate(leaderboardItemPrefab, transform);
@@ -74,6 +76,17 @@ public class LeaderboardScript : MonoBehaviour
                     default:
                         break;
                 }
+            }
+        }
+    }
+
+    void ResetEntries()
+    {
+        foreach (Transform child in transform)
+        {
+            if (child.gameObject != leaderboardItemDefault) 
+            { 
+                Destroy(child.gameObject);
             }
         }
     }
