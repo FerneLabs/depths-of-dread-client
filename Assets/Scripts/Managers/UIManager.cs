@@ -1,4 +1,5 @@
 using System;
+using Dojo;
 using TMPro;
 using UnityEditor.Networking.PlayerConnection;
 using UnityEngine;
@@ -10,6 +11,7 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
 
+    [SerializeField] DojoWorker dojoWorker;
     [SerializeField] GameObject[] uiElements;
     [SerializeField] GameObject grid;
     [SerializeField] Tilemap tilemap;
@@ -54,6 +56,22 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void ShowModal(string tag)
+    {
+        foreach (var element in uiElements)
+        {
+            if (element.CompareTag(tag) || element.CompareTag("GS-Backdrop")) element.SetActive(true);
+        }
+    }
+
+    public void HideModal(string tag)
+    {
+        foreach (var element in uiElements)
+        {
+            if (element.CompareTag(tag) || element.CompareTag("GS-Backdrop")) element.SetActive(false);
+        }
+    }
+
     public void HandleConnection(string username)
     {
         SetActive(new string[] { "MS-ProfileButton", "MS-LogoutButton", "LB-ProfileButton", "LB-LogoutButton" }, true);
@@ -68,6 +86,27 @@ public class UIManager : MonoBehaviour
         SetActive(new string[] { "MS-ConnectButton", "LB-ConnectButton" }, true);
         SetText($"MS-UsernameText", "connect");
         SetText($"LB-UsernameText", "connect");
+    }
+
+    // TODO find way to call this from editor callback
+    public void HandleNewFloor(depths_of_dread_GameFloor gameFloor = null)
+    {
+        gameFloor = gameFloor ?? dojoWorker.gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        RenderGameGrid(gameFloor);
+
+        var hintText = "";
+        foreach (Direction direction in gameFloor.path)
+        {
+            hintText += direction.ToSymbol();
+        }
+        ShowModal("GS-Modal-Hint");
+        SetText("GS-Modal-HintText", hintText);
+    }
+
+    public void HandleFloorCleared(depths_of_dread_PlayerState playerState)
+    {
+        SetText("GS-Modal-FloorClearedText", $"Floor #{playerState.current_floor - 1} cleared");
+        ShowModal("GS-Modal-FloorCleared");
     }
 
     public void RenderGameGrid(depths_of_dread_GameFloor gameFloor)
@@ -115,14 +154,19 @@ public class UIManager : MonoBehaviour
         SetText("GS-UsernameText", HexToASCII(playerData.username.Hex()));
         SetText("GS-GameFloorText", $"Floor: {playerState.current_floor}");
         SetText("GS-CoinsText", $"Coins: {playerState.coins}");
-    }
-
-    public void HandleMovement(Vec2 currentPosition, Direction moveDirection)
-    {
-        Vector3 currentPositionV3 = new(currentPosition.x, currentPosition.y, 0);
-        Vector3 targetPosition = currentPositionV3 + moveDirection.ToVector3();
+        
+        // Temp until we use events
+        Vector3 targetPosition = new(playerState.position.x, playerState.position.y, 0);
         character.GetComponent<MovementScript>().Move(targetPosition);
     }
+
+    // Function for handling event based movement
+    // public void HandleMovement(Vec2 currentPosition, Direction moveDirection)
+    // {
+    //     Vector3 currentPositionV3 = new(currentPosition.x, currentPosition.y, 0);
+    //     Vector3 targetPosition = currentPositionV3 + moveDirection.ToVector3();
+    //     character.GetComponent<MovementScript>().Move(targetPosition);
+    // }
 
     public void HandleGameover()
     {

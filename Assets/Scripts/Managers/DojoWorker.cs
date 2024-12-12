@@ -20,8 +20,9 @@ public class DojoWorker : MonoBehaviour
     public Actions actions;
     public JsonRpcClient provider;
     private Account account;
-    private GameObject playerEntity;
-    private GameObject gameEntity;
+    public GameObject playerEntity;
+    public GameObject gameEntity;
+    private int localCurrentFloor = 0; // Temporary workaround until we can use events.
 
     void Start()
     {
@@ -30,90 +31,17 @@ public class DojoWorker : MonoBehaviour
         worldManager.synchronizationMaster.OnEventMessage.AddListener(HandleEvent);
     }
 
-    private void HandleEvent(ModelInstance eventMessage)
-    {
-        Debug.Log($"Got event: {eventMessage}");
-        // TODO handle events when they work properly in the SDK
-        // switch (eventMessage.GetType().Name)
-        // {
-        //     case "depths_of_dread_Moved":
-        //         var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
-        //         var direction = eventMessage.GetComponent<depths_of_dread_Moved>().direction;
-        //         Debug.Log($"Received movement {direction}");
-        //         UIManager.instance.HandleMovement(playerState.position, direction);
-        //         break;
-        //     default:
-        //         break;
-        // }
-    }
-
-
-
-    public async void SimulateControllerConnection(string username)
-    {
-        provider = new JsonRpcClient(dojoConfig.rpcUrl);
-        account = new Account(
-            provider,
-            new SigningKey(dojoWorkerData.masterPrivateKey),
-            new FieldElement(dojoWorkerData.masterAddress)
-        );
-
-        var txnHash = await CreatePlayer(username);
-        await provider.WaitForTransaction(txnHash);
-    }
-
-    public void SimulateControllerDisconnection()
-    {
-        provider = new JsonRpcClient(dojoConfig.rpcUrl);
-        account = null;
-        playerEntity = null;
-
-        UIManager.instance.HandleDisconnection();
-    }
-
-    public async Task<FieldElement> CreatePlayer(string username)
-    {
-        BigInteger encodedUsername = ASCIIToBigInt(username);
-        return await actions.create_player(account, new FieldElement(encodedUsername));
-    }
-
-    public async void CreateGame()
-    {
-        if (account == null)
-        {
-            SimulateControllerConnection("test_username");
-            return;
-        }
-
-        var txnHash = await actions.create_game(account);
-        await provider.WaitForTransaction(txnHash);
-
-        if (gameEntity != null)
-        {
-            ScreenManager.instance.SetActiveScreen("GameOverlay");
-        }
-        else
-        {
-            Debug.LogWarning("Game entity is null");
-        }
-    }
-
-    public async void EndGame()
-    {
-        await actions.end_game(account);
-        UIManager.instance.HandleExitGame();
-    }
-
-    public async void Move(int direction)
-    {
-        Direction dir = (Direction)Direction.FromIndex(typeof(Direction), direction);
-        await actions.move(account, dir);
-    }
-
     void HandleSpawn(GameObject spownedEntity)
     {
         if (account == null) { return; }
         SyncLocalEntities();
+        InitLocalCurrentFloor(); // Temporary workaround until we can use events.
+    }
+
+    // Temporary workaround until we can use events.
+    void InitLocalCurrentFloor()
+    {
+        localCurrentFloor = playerEntity != null ? playerEntity.GetComponent<depths_of_dread_PlayerState>().current_floor : 0;
     }
 
     void HandleUpdate(ModelInstance updatedModel)
@@ -165,6 +93,24 @@ public class DojoWorker : MonoBehaviour
         }
     }
 
+    private void HandleEvent(ModelInstance eventMessage)
+    {
+        Debug.Log($"Got event: {eventMessage}");
+
+        // TODO handle events when they work properly in the SDK
+        // switch (eventMessage.GetType().Name)
+        // {
+        //     case "depths_of_dread_Moved":
+        //         var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
+        //         var direction = eventMessage.GetComponent<depths_of_dread_Moved>().direction;
+        //         Debug.Log($"Received movement {direction}");
+        //         UIManager.instance.HandleMovement(playerState.position, direction);
+        //         break;
+        //     default:
+        //         break;
+        // }
+    }
+
     void SyncLocalEntities()
     {
         var playerKey = account == null ? null : GetPoseidonHash(account.Address);
@@ -196,7 +142,68 @@ public class DojoWorker : MonoBehaviour
         }
     }
 
+    public async void SimulateControllerConnection(string username)
+    {
+        provider = new JsonRpcClient(dojoConfig.rpcUrl);
+        account = new Account(
+            provider,
+            new SigningKey(dojoWorkerData.masterPrivateKey),
+            new FieldElement(dojoWorkerData.masterAddress)
+        );
 
+        var txnHash = await CreatePlayer(username);
+        await provider.WaitForTransaction(txnHash);
+
+        InitLocalCurrentFloor(); // Temporary workaround until we can use events.
+    }
+
+    public void SimulateControllerDisconnection()
+    {
+        provider = new JsonRpcClient(dojoConfig.rpcUrl);
+        account = null;
+        playerEntity = null;
+
+        UIManager.instance.HandleDisconnection();
+    }
+
+    public async Task<FieldElement> CreatePlayer(string username)
+    {
+        BigInteger encodedUsername = ASCIIToBigInt(username);
+        return await actions.create_player(account, new FieldElement(encodedUsername));
+    }
+
+    public async void CreateGame()
+    {
+        if (account == null)
+        {
+            SimulateControllerConnection("test_username");
+            return;
+        }
+
+        var txnHash = await actions.create_game(account);
+        await provider.WaitForTransaction(txnHash);
+
+        if (gameEntity != null)
+        {
+            ScreenManager.instance.SetActiveScreen("GameOverlay");
+        }
+        else
+        {
+            Debug.LogWarning("Game entity is null");
+        }
+    }
+
+    public async void EndGame()
+    {
+        await actions.end_game(account);
+        UIManager.instance.HandleExitGame();
+    }
+
+    public async void Move(int direction)
+    {
+        Direction dir = (Direction)Direction.FromIndex(typeof(Direction), direction);
+        await actions.move(account, dir);
+    }
 
     void OnPlayerDataUpdate()
     {
@@ -223,9 +230,9 @@ public class DojoWorker : MonoBehaviour
             ScreenManager.instance.SetActiveScreen("GameOverlay");
         }
 
+        // Gameover is triggered
         if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
         {
-            // Gameover is triggered
             gameEntity = null;
             UIManager.instance.HandleGameover();
             return;
@@ -235,6 +242,13 @@ public class DojoWorker : MonoBehaviour
         if (ScreenManager.instance.currentScreen != "GameOverlay")
         {
             return;
+        }
+
+        // Floor is cleared
+        // Temporary workaround until we can use events
+        if (localCurrentFloor < playerState.current_floor) {
+            localCurrentFloor = playerState.current_floor;
+            UIManager.instance.HandleFloorCleared(playerState);
         }
 
         UIManager.instance.HandleStateUpdate(playerData, playerState);
@@ -258,10 +272,14 @@ public class DojoWorker : MonoBehaviour
         var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
 
         if (gameFloor == null) { Debug.Log("Game floor is null"); return; }
-        if (gameFloor.game_id != playerState.game_id) { throw new Exception("Game floor ID does not match with playerState ID"); }
+        if (gameFloor.game_id != playerState.game_id) { 
+            Debug.LogWarning("Game floor ID does not match with playerState ID. Force syncing entity state.");
+            SyncLocalEntities(); 
+            Debug.Log($"Entity mismatch corrected? {gameFloor.game_id == playerState.game_id}");
+        }
 
         Debug.Log($"Going to render floor for ID {gameFloor.game_id}, size {gameFloor.size.x + 1}x{gameFloor.size.y + 1}");
-        UIManager.instance.RenderGameGrid(gameFloor);
+        UIManager.instance.HandleNewFloor(gameFloor);
         Debug.Log($"Updated game floor");
     }
 

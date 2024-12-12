@@ -39,6 +39,17 @@ public abstract record Direction() : Enum {
             _ => throw new InvalidOperationException("Unknown direction")
         };
     }
+
+    public string ToSymbol() {
+        return this switch {
+            None => "-",
+            Left => "←",
+            Right => "→",
+            Up => "↑",
+            Down => "↓",
+            _ => throw new InvalidOperationException("Unknown direction")
+        };
+    }
 }
 
 // Model definition for `depths_of_dread::models::GameFloor` model
