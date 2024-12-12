@@ -115,9 +115,12 @@ public class UIManager : MonoBehaviour
         SetText("GS-UsernameText", HexToASCII(playerData.username.Hex()));
         SetText("GS-GameFloorText", $"Floor: {playerState.current_floor}");
         SetText("GS-CoinsText", $"Coins: {playerState.coins}");
+    }
 
-        
-        Vector3 targetPosition = new(playerState.position.x, playerState.position.y, 0);
+    public void HandleMovement(Vec2 currentPosition, Direction moveDirection)
+    {
+        Vector3 currentPositionV3 = new(currentPosition.x, currentPosition.y, 0);
+        Vector3 targetPosition = currentPositionV3 + moveDirection.ToVector3();
         character.GetComponent<MovementScript>().Move(targetPosition);
     }
 

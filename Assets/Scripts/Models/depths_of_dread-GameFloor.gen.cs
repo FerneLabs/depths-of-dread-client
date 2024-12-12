@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Enum = Dojo.Starknet.Enum;
 using BigInteger = System.Numerics.BigInteger;
+using UnityEngine;
 
 // Type definition for `depths_of_dread::models::Direction` enum
 public abstract record Direction() : Enum {
@@ -26,6 +27,17 @@ public abstract record Direction() : Enum {
 
         var type = nestedTypes.OrderBy(t => t.MetadataToken).ElementAt(index);
         return (Enum)Activator.CreateInstance(type);
+    }
+
+    public Vector3 ToVector3() {
+        return this switch {
+            None => Vector3.zero,
+            Left => new Vector3(-1, 0, 0),
+            Right => new Vector3(1, 0, 0),
+            Up => new Vector3(0, 1, 0),
+            Down => new Vector3(0, -1, 0),
+            _ => throw new InvalidOperationException("Unknown direction")
+        };
     }
 }
 

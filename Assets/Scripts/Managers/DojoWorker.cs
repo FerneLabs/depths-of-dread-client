@@ -27,7 +27,27 @@ public class DojoWorker : MonoBehaviour
     {
         worldManager.synchronizationMaster.OnEntitySpawned.AddListener(HandleSpawn);
         worldManager.synchronizationMaster.OnModelUpdated.AddListener(HandleUpdate);
+        worldManager.synchronizationMaster.OnEventMessage.AddListener(HandleEvent);
     }
+
+    private void HandleEvent(ModelInstance eventMessage)
+    {
+        Debug.Log($"Got event: {eventMessage}");
+        // TODO handle events when they work properly in the SDK
+        // switch (eventMessage.GetType().Name)
+        // {
+        //     case "depths_of_dread_Moved":
+        //         var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
+        //         var direction = eventMessage.GetComponent<depths_of_dread_Moved>().direction;
+        //         Debug.Log($"Received movement {direction}");
+        //         UIManager.instance.HandleMovement(playerState.position, direction);
+        //         break;
+        //     default:
+        //         break;
+        // }
+    }
+
+
 
     public async void SimulateControllerConnection(string username)
     {
@@ -176,6 +196,8 @@ public class DojoWorker : MonoBehaviour
         }
     }
 
+
+
     void OnPlayerDataUpdate()
     {
         if (playerEntity == null) { Debug.Log("Player entity is null"); return; }
@@ -201,7 +223,8 @@ public class DojoWorker : MonoBehaviour
             ScreenManager.instance.SetActiveScreen("GameOverlay");
         }
 
-        if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay") {
+        if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
+        {
             // Gameover is triggered
             gameEntity = null;
             UIManager.instance.HandleGameover();
@@ -233,7 +256,7 @@ public class DojoWorker : MonoBehaviour
     {
         var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
         var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
-        
+
         if (gameFloor == null) { Debug.Log("Game floor is null"); return; }
         if (gameFloor.game_id != playerState.game_id) { throw new Exception("Game floor ID does not match with playerState ID"); }
 
