@@ -236,6 +236,8 @@ public class DojoWorker : MonoBehaviour
         {
             ScreenManager.instance.SetActiveScreen("GameOverlay");
             UIManager.instance.HandleNewFloor();
+            UIManager.instance.HandleStateUpdate(playerData, playerState);
+            return;
         }
 
         // Gameover is triggered
@@ -295,6 +297,8 @@ public class DojoWorker : MonoBehaviour
 
     void OnGameCoinsUpdate()
     {
+        var gameCoins = gameEntity.GetComponent<depths_of_dread_GameCoins>();
+        UIManager.instance.RenderCoins(gameCoins.coins);
         Debug.Log($"Updated game coins");
     }
 

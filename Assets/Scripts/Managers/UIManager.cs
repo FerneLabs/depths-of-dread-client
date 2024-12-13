@@ -1,10 +1,7 @@
-using System;
-using Dojo;
+using System.Linq;
 using TMPro;
-using UnityEditor.Networking.PlayerConnection;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using UnityEngine.UI;
 using static EncodingService;
 
 public class UIManager : MonoBehaviour
@@ -15,7 +12,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] GameObject[] uiElements;
     [SerializeField] GameObject grid;
     [SerializeField] Tilemap tilemap;
-    [SerializeField] Tile groundTile;
+    [SerializeField] Tile[] groundTiles;
+    [SerializeField] GameObject coinPrefab;
     [SerializeField] GameObject character;
 
     private void Awake()
@@ -93,7 +91,7 @@ public class UIManager : MonoBehaviour
     {
         await dojoWorker.SyncLocalEntities();
         var gameFloor = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameFloor>();
-        if (gameFloor == null) {Debug.LogWarning("Game floor is null");}
+        if (gameFloor == null) { Debug.LogWarning("Game floor is null"); }
 
         RenderGameGrid(gameFloor);
 
@@ -146,18 +144,31 @@ public class UIManager : MonoBehaviour
             for (int y = 0; y < gameFloor.size.y + 1; y++)
             {
                 Vector3Int coordinate = new(x, y, 0);
-                tilemap.SetTile(coordinate, groundTile);
+                tilemap.SetTile(coordinate, groundTiles[Random.Range(0, groundTiles.Length - 1)]);
             }
         }
         Debug.Log($"Rendered game grid {gameFloor.size.x + 1}x{gameFloor.size.y + 1}");
     }
+
+    public void RenderCoins(Vec2[] coins)
+    {
+        DestroyCoins();
+        foreach (var coin in coins)
+        {
+            // .5f is needed for the grid offset 
+            var coinInstance = Instantiate(coinPrefab, grid.transform);
+            coinInstance.transform.localPosition = new Vector3(coin.x + .5f, coin.y + .5f, 0);
+        }
+    }
+
+    void DestroyCoins() => GameObject.FindGameObjectsWithTag("GS-Coin").ToList().ForEach(coinInstance => Destroy(coinInstance));
 
     public void HandleStateUpdate(depths_of_dread_PlayerData playerData, depths_of_dread_PlayerState playerState)
     {
         SetText("GS-UsernameText", HexToASCII(playerData.username.Hex()));
         SetText("GS-GameFloorText", $"Floor: {playerState.current_floor}");
         SetText("GS-CoinsText", $"Coins: {playerState.coins}");
-        
+
         // Temp until we use events
         Vector3 targetPosition = new(playerState.position.x, playerState.position.y, 0);
         character.GetComponent<MovementScript>().Move(targetPosition);
@@ -193,6 +204,7 @@ public class UIManager : MonoBehaviour
     {
         HideModal("GS-Modal-Gameover");
         HideModal("GS-Modal-Error");
+        DestroyCoins();
         character.GetComponent<MovementScript>().Move(new Vector3(0, 0, 0));
         tilemap.ClearAllTiles();
         grid.transform.localScale = new Vector3(1, 1, 1);
