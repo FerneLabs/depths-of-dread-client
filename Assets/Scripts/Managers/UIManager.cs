@@ -1,4 +1,5 @@
 using System;
+using Dojo;
 using TMPro;
 using UnityEditor.Networking.PlayerConnection;
 using UnityEngine;
@@ -10,6 +11,7 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
 
+    [SerializeField] DojoWorker dojoWorker;
     [SerializeField] GameObject[] uiElements;
     [SerializeField] GameObject grid;
     [SerializeField] Tilemap tilemap;
@@ -54,6 +56,22 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void ShowModal(string tag)
+    {
+        foreach (var element in uiElements)
+        {
+            if (element.CompareTag(tag) || element.CompareTag("GS-Backdrop")) element.SetActive(true);
+        }
+    }
+
+    public void HideModal(string tag)
+    {
+        foreach (var element in uiElements)
+        {
+            if (element.CompareTag(tag) || element.CompareTag("GS-Backdrop")) element.SetActive(false);
+        }
+    }
+
     public void HandleConnection(string username)
     {
         SetActive(new string[] { "MS-ProfileButton", "MS-LogoutButton", "LB-ProfileButton", "LB-LogoutButton" }, true);
@@ -68,6 +86,30 @@ public class UIManager : MonoBehaviour
         SetActive(new string[] { "MS-ConnectButton", "LB-ConnectButton" }, true);
         SetText($"MS-UsernameText", "connect");
         SetText($"LB-UsernameText", "connect");
+    }
+
+    // TODO find way to call this from editor callback
+    public async void HandleNewFloor()
+    {
+        await dojoWorker.SyncLocalEntities();
+        var gameFloor = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        if (gameFloor == null) {Debug.LogWarning("Game floor is null");}
+
+        RenderGameGrid(gameFloor);
+
+        var hintText = "";
+        foreach (Direction direction in gameFloor.path)
+        {
+            hintText += direction.ToSymbol();
+        }
+        ShowModal("GS-Modal-Hint");
+        SetText("GS-Modal-HintText", hintText);
+    }
+
+    public void HandleFloorCleared(depths_of_dread_PlayerState playerState)
+    {
+        SetText("GS-Modal-FloorClearedText", $"Floor #{playerState.current_floor - 1} cleared");
+        ShowModal("GS-Modal-FloorCleared");
     }
 
     public void RenderGameGrid(depths_of_dread_GameFloor gameFloor)
@@ -115,25 +157,47 @@ public class UIManager : MonoBehaviour
         SetText("GS-UsernameText", HexToASCII(playerData.username.Hex()));
         SetText("GS-GameFloorText", $"Floor: {playerState.current_floor}");
         SetText("GS-CoinsText", $"Coins: {playerState.coins}");
-
         
+        // Temp until we use events
         Vector3 targetPosition = new(playerState.position.x, playerState.position.y, 0);
         character.GetComponent<MovementScript>().Move(targetPosition);
     }
 
-    public void HandleGameover()
+    // Function for handling event based movement
+    // public void HandleMovement(Vec2 currentPosition, Direction moveDirection)
+    // {
+    //     Vector3 currentPositionV3 = new(currentPosition.x, currentPosition.y, 0);
+    //     Vector3 targetPosition = currentPositionV3 + moveDirection.ToVector3();
+    //     character.GetComponent<MovementScript>().Move(targetPosition);
+    // }
+
+    public void HandleError(string errorMessage)
     {
-        tilemap.ClearAllTiles();
-        grid.transform.localScale = new Vector3(1, 1, 1);
-        grid.transform.position = new Vector3(0, 0, 0);
-        ScreenManager.instance.SetActiveScreen("MainScreen");
+        SetText("GS-Modal-ErrorText", errorMessage);
+        ShowModal("GS-Modal-Error");
+    }
+
+    public async void HandleGameover()
+    {
+        await dojoWorker.SyncLocalEntities();
+        var gameData = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameData>();
+        int runtime = (int)(gameData.end_time - gameData.start_time);
+
+        SetText("GS-Modal-GameoverScoreText", $"Score: {gameData.total_score}");
+        SetText("GS-Modal-GameoverFloorText", $"Floor reached: {gameData.floor_reached}");
+        SetText("GS-Modal-GameoverTimeText", $"Floor reached: {SecondsToTime(runtime)}");
+        ShowModal("GS-Modal-Gameover");
     }
 
     public void HandleExitGame()
     {
+        HideModal("GS-Modal-Gameover");
+        HideModal("GS-Modal-Error");
+        character.GetComponent<MovementScript>().Move(new Vector3(0, 0, 0));
         tilemap.ClearAllTiles();
         grid.transform.localScale = new Vector3(1, 1, 1);
         grid.transform.position = new Vector3(0, 0, 0);
         ScreenManager.instance.SetActiveScreen("MainScreen");
+        dojoWorker.gameEntity = null;
     }
 }

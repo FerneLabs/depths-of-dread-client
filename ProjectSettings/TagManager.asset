@@ -26,6 +26,17 @@ TagManager:
   - GS-GameFloorText
   - GS-CoinsText
   - GS-UsernameText
+  - GS-Backdrop
+  - GS-Modal-Hint
+  - GS-Modal-HintText
+  - GS-Modal-Exit
+  - GS-Modal-FloorCleared
+  - GS-Modal-FloorClearedText
+  - GS-Modal-Gameover
+  - GS-Modal-GameoverScoreText
+  - GS-Modal-GameoverFloorText
+  - GS-Modal-GameoverTimeText
+  - GS-Modal-Error
   layers:
   - Default
   - TransparentFX

@@ -9,6 +9,9 @@ public class LeaderboardScript : MonoBehaviour
     [SerializeField] WorldManager worldManager;
     [SerializeField] GameObject leaderboardItemPrefab;
     [SerializeField] GameObject leaderboardItemDefault;
+    [SerializeField] GameObject leaderboardHeader;
+
+    // TODO add table indicators for score and runtime in editor hierarchy
 
     public void RenderLeaderboard()
     {
@@ -41,10 +44,11 @@ public class LeaderboardScript : MonoBehaviour
 
         // Shorten to only 20 entries
         gameDatas = gameDatas.Length > 20 ? gameDatas[..20] : gameDatas;  
-
+        
         if (gameDatas.Length > 0) 
         {
             leaderboardItemDefault.SetActive(false);
+            leaderboardHeader.SetActive(true);
         }
 
         // Clear leaderboard before populating
@@ -84,7 +88,7 @@ public class LeaderboardScript : MonoBehaviour
     {
         foreach (Transform child in transform)
         {
-            if (child.gameObject != leaderboardItemDefault) 
+            if (child.gameObject.name != leaderboardItemDefault.name) 
             { 
                 Destroy(child.gameObject);
             }
@@ -103,22 +107,5 @@ public class LeaderboardScript : MonoBehaviour
         }
 
         return matchingPlayer;
-    }
-
-    string SecondsToTime(int seconds)
-    {
-        if (seconds == 0) return string.Empty;
-
-        var minutes = seconds / 60;
-        var remainingSeconds = seconds % 60;
-
-        if (minutes > 0)
-        {
-            return $"{minutes}m {Math.Abs(remainingSeconds)}s";
-        }
-        else
-        {
-            return $"{Math.Abs(remainingSeconds)}s";
-        }
     }
 }

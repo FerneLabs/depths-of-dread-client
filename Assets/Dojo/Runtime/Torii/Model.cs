@@ -100,8 +100,7 @@ namespace Dojo.Torii
 
         private object HandleWasmValue(WasmValue value)
         {
-            Debug.Log($"value: {JsonConvert.SerializeObject(value)}");
-            return value.type switch
+            return value.type.ToLower() switch
             {
                 // struct
                 "struct" => HandleJSStruct(value.type_name, value.value.ToObject<Dictionary<string, WasmValue>>()),
@@ -112,7 +111,7 @@ namespace Dojo.Torii
                 // array
                 "array" => value.value.ToObject<JArray>().Select(m => HandleWasmValue(m.ToObject<WasmValue>())).ToList(),
                 "bytearray" => value.value.ToObject<string>(),
-                "primitive" => value.type_name switch
+                "primitive" => value.type_name.ToLower() switch
                 {
                     // primitives
                     "bool" => value.value.ToObject<bool>(),
@@ -138,9 +137,9 @@ namespace Dojo.Torii
                     }),
                     "usize" => value.value.ToObject<uint>(),
                     // these should be fine
-                    "Felt252" => new FieldElement(value.value.ToObject<string>()),
-                    "ClassHash" => new FieldElement(value.value.ToObject<string>()),
-                    "ContractAddress" => new FieldElement(value.value.ToObject<string>()),
+                    "felt252" => new FieldElement(value.value.ToObject<string>()),
+                    "classhash" => new FieldElement(value.value.ToObject<string>()),
+                    "contractaddress" => new FieldElement(value.value.ToObject<string>()),
                     _ => throw new Exception("Unknown primitive type: " + value.type_name)
                 },
                 _ => throw new Exception("Unknown type: " + value.type)
