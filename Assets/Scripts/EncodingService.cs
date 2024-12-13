@@ -88,4 +88,21 @@ class EncodingService
 
         return fieldElements;
     }
+
+    public static string SecondsToTime(int seconds)
+    {
+        if (seconds == 0) return string.Empty;
+
+        var minutes = seconds / 60;
+        var remainingSeconds = seconds % 60;
+
+        if (minutes > 0)
+        {
+            return $"{minutes}m {Math.Abs(remainingSeconds)}s";
+        }
+        else
+        {
+            return $"{Math.Abs(remainingSeconds)}s";
+        }
+    }
 }

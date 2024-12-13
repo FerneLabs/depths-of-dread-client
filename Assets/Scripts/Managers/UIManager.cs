@@ -89,9 +89,12 @@ public class UIManager : MonoBehaviour
     }
 
     // TODO find way to call this from editor callback
-    public void HandleNewFloor(depths_of_dread_GameFloor gameFloor = null)
+    public async void HandleNewFloor()
     {
-        gameFloor = gameFloor ?? dojoWorker.gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        await dojoWorker.SyncLocalEntities();
+        var gameFloor = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        if (gameFloor == null) {Debug.LogWarning("Game floor is null");}
+
         RenderGameGrid(gameFloor);
 
         var hintText = "";
@@ -168,19 +171,33 @@ public class UIManager : MonoBehaviour
     //     character.GetComponent<MovementScript>().Move(targetPosition);
     // }
 
-    public void HandleGameover()
+    public void HandleError(string errorMessage)
     {
-        tilemap.ClearAllTiles();
-        grid.transform.localScale = new Vector3(1, 1, 1);
-        grid.transform.position = new Vector3(0, 0, 0);
-        ScreenManager.instance.SetActiveScreen("MainScreen");
+        SetText("GS-Modal-ErrorText", errorMessage);
+        ShowModal("GS-Modal-Error");
+    }
+
+    public async void HandleGameover()
+    {
+        await dojoWorker.SyncLocalEntities();
+        var gameData = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameData>();
+        int runtime = (int)(gameData.end_time - gameData.start_time);
+
+        SetText("GS-Modal-GameoverScoreText", $"Score: {gameData.total_score}");
+        SetText("GS-Modal-GameoverFloorText", $"Floor reached: {gameData.floor_reached}");
+        SetText("GS-Modal-GameoverTimeText", $"Floor reached: {SecondsToTime(runtime)}");
+        ShowModal("GS-Modal-Gameover");
     }
 
     public void HandleExitGame()
     {
+        HideModal("GS-Modal-Gameover");
+        HideModal("GS-Modal-Error");
+        character.GetComponent<MovementScript>().Move(new Vector3(0, 0, 0));
         tilemap.ClearAllTiles();
         grid.transform.localScale = new Vector3(1, 1, 1);
         grid.transform.position = new Vector3(0, 0, 0);
         ScreenManager.instance.SetActiveScreen("MainScreen");
+        dojoWorker.gameEntity = null;
     }
 }

@@ -22,7 +22,7 @@ public class DojoWorker : MonoBehaviour
     private Account account;
     public GameObject playerEntity;
     public GameObject gameEntity;
-    private int localCurrentFloor = 0; // Temporary workaround until we can use events.
+    private int localCurrentFloor = 1; // Temporary workaround until we can use events.
 
     void Start()
     {
@@ -31,23 +31,24 @@ public class DojoWorker : MonoBehaviour
         worldManager.synchronizationMaster.OnEventMessage.AddListener(HandleEvent);
     }
 
-    void HandleSpawn(GameObject spownedEntity)
+    async void HandleSpawn(GameObject spownedEntity)
     {
         if (account == null) { return; }
-        SyncLocalEntities();
+        await SyncLocalEntities();
         InitLocalCurrentFloor(); // Temporary workaround until we can use events.
     }
 
     // Temporary workaround until we can use events.
     void InitLocalCurrentFloor()
     {
-        localCurrentFloor = playerEntity != null ? playerEntity.GetComponent<depths_of_dread_PlayerState>().current_floor : 0;
+        var playerState = playerEntity != null ? playerEntity.GetComponent<depths_of_dread_PlayerState>() : null;
+        localCurrentFloor = playerState != null ? playerState.current_floor : 1;
     }
 
-    void HandleUpdate(ModelInstance updatedModel)
+    async void HandleUpdate(ModelInstance updatedModel)
     {
         // Player Entity Handlers
-        SyncLocalEntities();
+        await SyncLocalEntities();
         if (playerEntity != null)
         {
             switch (updatedModel.GetType().Name)
@@ -70,7 +71,7 @@ public class DojoWorker : MonoBehaviour
         // We need to run entity sync again to initialize game entity with latest PlayerState.game_id value.
 
         // Game Entity Handlers
-        SyncLocalEntities();
+        await SyncLocalEntities();
         if (gameEntity != null)
         {
             switch (updatedModel.GetType().Name)
@@ -111,9 +112,11 @@ public class DojoWorker : MonoBehaviour
         // }
     }
 
-    void SyncLocalEntities()
+    public async Task SyncLocalEntities()
     {
         var playerKey = account == null ? null : GetPoseidonHash(account.Address);
+        await Task.Yield();
+
         var pEntity = GameObject.Find(playerKey);
 
         // and if the entity matches the current player hashed key
@@ -126,9 +129,12 @@ public class DojoWorker : MonoBehaviour
 
             Debug.Log($"Synced playerEntity {playerEntity}");
         }
+        await Task.Yield();
 
         var playerState = playerEntity == null ? null : playerEntity.GetComponent<depths_of_dread_PlayerState>();
         var gameKey = playerState == null ? null : GetPoseidonHash(new FieldElement(playerState.game_id));
+        await Task.Yield();
+
         var gEntity = GameObject.Find(gameKey);
 
         if (gEntity != null && gEntity != gameEntity)
@@ -186,6 +192,7 @@ public class DojoWorker : MonoBehaviour
         if (gameEntity != null)
         {
             ScreenManager.instance.SetActiveScreen("GameOverlay");
+            UIManager.instance.HandleNewFloor();
         }
         else
         {
@@ -228,12 +235,12 @@ public class DojoWorker : MonoBehaviour
         if (playerState.game_id != 0 && ScreenManager.instance.currentScreen != "GameOverlay")
         {
             ScreenManager.instance.SetActiveScreen("GameOverlay");
+            UIManager.instance.HandleNewFloor();
         }
 
         // Gameover is triggered
         if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
         {
-            gameEntity = null;
             UIManager.instance.HandleGameover();
             return;
         }
@@ -246,7 +253,8 @@ public class DojoWorker : MonoBehaviour
 
         // Floor is cleared
         // Temporary workaround until we can use events
-        if (localCurrentFloor < playerState.current_floor) {
+        if (localCurrentFloor < playerState.current_floor && playerState.current_floor > 1)
+        {
             localCurrentFloor = playerState.current_floor;
             UIManager.instance.HandleFloorCleared(playerState);
         }
@@ -269,18 +277,20 @@ public class DojoWorker : MonoBehaviour
     void OnGameFloorUpdate()
     {
         var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
-        var playerState = playerEntity.GetComponent<depths_of_dread_PlayerState>();
 
-        if (gameFloor == null) { Debug.Log("Game floor is null"); return; }
-        if (gameFloor.game_id != playerState.game_id) { 
-            Debug.LogWarning("Game floor ID does not match with playerState ID. Force syncing entity state.");
-            SyncLocalEntities(); 
-            Debug.Log($"Entity mismatch corrected? {gameFloor.game_id == playerState.game_id}");
+        if (gameFloor.size.x == 0) {
+            UIManager.instance.HandleError("gamefloor size is zero");
         }
+        // if (gameFloor == null) { Debug.Log("Game floor is null"); return; }
+        // if (gameFloor.game_id != playerState.game_id) { 
+        //     Debug.LogWarning("Game floor ID does not match with playerState ID. Force syncing entity state.");
+        //     SyncLocalEntities(); 
+        //     Debug.Log($"Entity mismatch corrected? {gameFloor.game_id == playerState.game_id}");
+        // }
 
-        Debug.Log($"Going to render floor for ID {gameFloor.game_id}, size {gameFloor.size.x + 1}x{gameFloor.size.y + 1}");
-        UIManager.instance.HandleNewFloor(gameFloor);
-        Debug.Log($"Updated game floor");
+        // Debug.Log($"Going to render floor for ID {gameFloor.game_id}, size {gameFloor.size.x + 1}x{gameFloor.size.y + 1}");
+        // UIManager.instance.HandleNewFloor();
+        // Debug.Log($"Updated game floor");
     }
 
     void OnGameCoinsUpdate()
