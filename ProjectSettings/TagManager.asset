@@ -37,6 +37,8 @@ TagManager:
   - GS-Modal-GameoverFloorText
   - GS-Modal-GameoverTimeText
   - GS-Modal-Error
+  - GS-Modal-ErrorText
+  - GS-Coin
   layers:
   - Default
   - TransparentFX
