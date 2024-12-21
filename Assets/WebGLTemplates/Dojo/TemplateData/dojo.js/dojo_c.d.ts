@@ -2,92 +2,201 @@ declare namespace wasm_bindgen {
 	/* tslint:disable */
 	/* eslint-disable */
 	/**
-	* @param {string} typed_data
-	* @param {string} address
-	* @returns {string}
-	*/
+	 * Encodes typed data according to Starknet's typed data specification
+	 *
+	 * # Parameters
+	 * * `typed_data` - JSON string containing the typed data
+	 * * `address` - Address as hex string
+	 *
+	 * # Returns
+	 * Result containing encoded data as hex string or error
+	 */
 	export function typedDataEncode(typed_data: string, address: string): string;
 	/**
-	* @returns {string}
-	*/
+	 * Generates a new random signing key
+	 *
+	 * # Returns
+	 * Private key as hex string
+	 */
 	export function signingKeyNew(): string;
 	/**
-	* @param {string} private_key
-	* @param {string} hash
-	* @returns {Signature}
-	*/
+	 * Signs a message hash with a private key
+	 *
+	 * # Parameters
+	 * * `private_key` - Private key as hex string
+	 * * `hash` - Message hash as hex string
+	 *
+	 * # Returns
+	 * Result containing signature or error
+	 */
 	export function signingKeySign(private_key: string, hash: string): Signature;
 	/**
-	* @param {string} signing_key
-	* @returns {string}
-	*/
+	 * Derives a verifying (public) key from a signing (private) key
+	 *
+	 * # Parameters
+	 * * `signing_key` - Signing key as hex string
+	 *
+	 * # Returns
+	 * Result containing verifying key as hex string or error
+	 */
 	export function verifyingKeyNew(signing_key: string): string;
 	/**
-	* @param {string} verifying_key
-	* @param {string} hash
-	* @param {Signature} signature
-	* @returns {boolean}
-	*/
+	 * Verifies a signature against a message hash using a verifying key
+	 *
+	 * # Parameters
+	 * * `verifying_key` - Verifying key as hex string
+	 * * `hash` - Message hash as hex string
+	 * * `signature` - Signature to verify
+	 *
+	 * # Returns
+	 * Result containing verification success boolean or error
+	 */
 	export function verifyingKeyVerify(verifying_key: string, hash: string, signature: Signature): boolean;
 	/**
-	* @param {string} rpc_url
-	* @returns {Provider}
-	*/
+	 * Creates a new Starknet provider instance for a given RPC URL
+	 *
+	 * # Parameters
+	 * * `rpc_url` - URL of the RPC endpoint
+	 *
+	 * # Returns
+	 * Result containing Provider instance or error
+	 */
 	export function createProvider(rpc_url: string): Provider;
 	/**
-	* @param {string} class_hash
-	* @param {string} salt
-	* @param {(string)[]} constructor_calldata
-	* @param {string} deployer_address
-	* @returns {string}
-	*/
+	 * Computes a contract address from deployment parameters
+	 *
+	 * # Parameters
+	 * * `class_hash` - Contract class hash as hex string
+	 * * `salt` - Salt value as hex string
+	 * * `constructor_calldata` - Array of constructor parameters as hex strings
+	 * * `deployer_address` - Address of deployer as hex string
+	 *
+	 * # Returns
+	 * Result containing computed contract address as hex string or error
+	 */
 	export function hashGetContractAddress(class_hash: string, salt: string, constructor_calldata: (string)[], deployer_address: string): string;
 	/**
-	* @param {string} tag
-	* @returns {string}
-	*/
+	 * Computes a selector from a tag string
+	 *
+	 * # Parameters
+	 * * `tag` - Tag string to compute selector from
+	 *
+	 * # Returns
+	 * Selector as hex string
+	 */
 	export function getSelectorFromTag(tag: string): string;
 	/**
-	* @param {string} str
-	* @returns {(string)[]}
-	*/
+	 * Serializes a string into a Cairo byte array
+	 *
+	 * # Parameters
+	 * * `str` - String to serialize
+	 *
+	 * # Returns
+	 * Result containing array of field elements as hex strings or error
+	 */
 	export function byteArraySerialize(str: string): (string)[];
 	/**
-	* @param {(string)[]} felts
-	* @returns {string}
-	*/
+	 * Deserializes a Cairo byte array into a string
+	 *
+	 * # Parameters
+	 * * `felts` - Array of field elements as hex strings
+	 *
+	 * # Returns
+	 * Result containing deserialized string or error
+	 */
 	export function byteArrayDeserialize(felts: (string)[]): string;
 	/**
-	* @param {(string)[]} inputs
-	* @returns {string}
-	*/
+	 * Computes a Poseidon hash of the inputs
+	 *
+	 * # Parameters
+	 * * `inputs` - Array of field elements as hex strings
+	 *
+	 * # Returns
+	 * Result containing hash as hex string or error
+	 */
 	export function poseidonHash(inputs: (string)[]): string;
 	/**
-	* @param {string} name
-	* @returns {string}
-	*/
+	 * Gets a selector from a function name
+	 *
+	 * # Parameters
+	 * * `name` - Function name to compute selector from
+	 *
+	 * # Returns
+	 * Result containing selector as hex string or error
+	 */
 	export function getSelectorFromName(name: string): string;
 	/**
-	* @param {Uint8Array} inputs
-	* @returns {string}
-	*/
+	 * Computes the Starknet variant of Keccak hash
+	 *
+	 * # Parameters
+	 * * `inputs` - Byte array to hash
+	 *
+	 * # Returns
+	 * Result containing hash as hex string or error
+	 */
 	export function starknetKeccak(inputs: Uint8Array): string;
 	/**
-	* @param {string} str
-	* @returns {string}
-	*/
+	 * Converts a short string to a Cairo field element
+	 *
+	 * # Parameters
+	 * * `str` - String to convert
+	 *
+	 * # Returns
+	 * Result containing field element as hex string or error
+	 */
 	export function cairoShortStringToFelt(str: string): string;
 	/**
-	* @param {string} str
-	* @returns {string}
-	*/
+	 * Parses a Cairo field element into a short string
+	 *
+	 * # Parameters
+	 * * `str` - Field element as hex string
+	 *
+	 * # Returns
+	 * Result containing parsed string or error
+	 */
 	export function parseCairoShortString(str: string): string;
 	/**
-	* Create the a client with the given configurations.
-	* @param {ClientConfig} config
-	* @returns {Promise<ToriiClient>}
-	*/
+	 * Creates a new Torii client with the given configuration
+	 *
+	 * # Parameters
+	 * * `config` - Client configuration including URLs and world address
+	 *
+	 * # Returns
+	 * Result containing ToriiClient instance or error
+	 */
 	export function createClient(config: ClientConfig): Promise<ToriiClient>;
+	/**
+	 * The `ReadableStreamType` enum.
+	 *
+	 * *This API requires the following crate features to be activated: `ReadableStreamType`*
+	 */
+	type ReadableStreamType = "bytes";
+	export type Tokens = Token[];
+	
+	export type TokenBalances = TokenBalance[];
+	
+	export interface Token {
+	    contract_address: string;
+	    name: string;
+	    symbol: string;
+	    decimals: number;
+	    metadata: string;
+	}
+	
+	export interface TokenBalance {
+	    balance: string;
+	    account_address: string;
+	    contract_address: string;
+	    token_id: string;
+	}
+	
+	export interface IndexerUpdate {
+	    head: number;
+	    tps: number;
+	    last_block_timestamp: number;
+	    contract_address: string;
+	}
+	
 	export interface ClientConfig {
 	    rpcUrl: string;
 	    toriiUrl: string;
@@ -98,7 +207,7 @@ declare namespace wasm_bindgen {
 	export interface Ty {
 	    type: "primitive" | "struct" | "enum" | "array" | "tuple" | "bytearray";
 	    type_name: string;
-	    value: boolean | number | string | Ty | null;
+	    value: boolean | number | string | Ty | Record<string, Ty> | Array<Ty> | { option: string, value: Ty } | null;
 	    key: boolean;
 	}
 	
@@ -134,7 +243,19 @@ declare namespace wasm_bindgen {
 	    limit: number;
 	    offset: number;
 	    clause: Clause | undefined;
+	    dont_include_hashed_keys: boolean;
+	    order_by: OrderBy[];
+	    entity_models: string[];
+	    entity_updated_after: number;
 	}
+	
+	export interface OrderBy {
+	    model: string;
+	    member: string;
+	    direction: OrderDirection;
+	}
+	
+	export type OrderDirection = "Asc" | "Desc";
 	
 	export type Clause = { Keys: KeysClause } | { Member: MemberClause } | { Composite: CompositeClause };
 	
@@ -157,11 +278,13 @@ declare namespace wasm_bindgen {
 	    models: string[];
 	}
 	
+	export type MemberValue = { Primitive: Primitive } | { String: string };
+	
 	export interface MemberClause {
 	    model: string;
 	    member: string;
 	    operator: ComparisonOperator;
-	    value: Primitive;
+	    value: MemberValue;
 	}
 	
 	export interface CompositeClause {
@@ -182,210 +305,268 @@ declare namespace wasm_bindgen {
 	
 	export type Primitive = { I8: number | undefined } | { I16: number | undefined } | { I32: number | undefined } | { I64: number | undefined } | { I128: string | undefined } | { U8: number | undefined } | { U16: number | undefined } | { U32: number | undefined } | { U64: number | undefined } | { U128: string | undefined } | { U256: string | undefined } | { USize: number | undefined } | { Bool: boolean | undefined } | { Felt252: string | undefined } | { ClassHash: string | undefined } | { ContractAddress: string | undefined };
 	
-	/**
-	*/
+	export interface Event {
+	    keys: string[];
+	    data: string[];
+	    transaction_hash: string;
+	}
+	
 	export class Account {
+	  private constructor();
 	  free(): void;
-	/**
-	* @returns {string}
-	*/
+	  /**
+	   * Returns the account's address
+	   *
+	   * # Returns
+	   * Result containing address as hex string or error
+	   */
 	  address(): string;
-	/**
-	* @returns {string}
-	*/
+	  /**
+	   * Returns the account's chain ID
+	   *
+	   * # Returns
+	   * Result containing chain ID as hex string or error
+	   */
 	  chainId(): string;
-	/**
-	* @param {string} block_id
-	*/
+	  /**
+	   * Sets the block ID for subsequent operations
+	   *
+	   * # Parameters
+	   * * `block_id` - Block ID as hex string
+	   *
+	   * # Returns
+	   * Result containing unit or error
+	   */
 	  setBlockId(block_id: string): void;
-	/**
-	* @param {(Call)[]} calldata
-	* @returns {Promise<string>}
-	*/
+	  /**
+	   * Executes a raw transaction
+	   *
+	   * # Parameters
+	   * * `calldata` - Array of contract calls to execute
+	   *
+	   * # Returns
+	   * Result containing transaction hash as hex string or error
+	   */
 	  executeRaw(calldata: (Call)[]): Promise<string>;
-	/**
-	* @param {string} private_key
-	* @returns {Promise<Account>}
-	*/
+	  /**
+	   * Deploys a burner wallet
+	   *
+	   * # Parameters
+	   * * `private_key` - Private key for the burner wallet as hex string
+	   *
+	   * # Returns
+	   * Result containing new Account instance or error
+	   */
 	  deployBurner(private_key: string): Promise<Account>;
-	/**
-	* @returns {Promise<string>}
-	*/
+	  /**
+	   * Gets the current nonce for the account
+	   *
+	   * # Returns
+	   * Result containing nonce as hex string or error
+	   */
 	  nonce(): Promise<string>;
 	}
-	/**
-	*/
 	export class IntoUnderlyingByteSource {
+	  private constructor();
 	  free(): void;
-	/**
-	* @param {any} controller
-	*/
-	  start(controller: any): void;
-	/**
-	* @param {any} controller
-	* @returns {Promise<any>}
-	*/
-	  pull(controller: any): Promise<any>;
-	/**
-	*/
+	  start(controller: ReadableByteStreamController): void;
+	  pull(controller: ReadableByteStreamController): Promise<any>;
 	  cancel(): void;
-	/**
-	*/
+	  readonly type: ReadableStreamType;
 	  readonly autoAllocateChunkSize: number;
-	/**
-	*/
-	  readonly type: string;
 	}
-	/**
-	*/
 	export class IntoUnderlyingSink {
+	  private constructor();
 	  free(): void;
-	/**
-	* @param {any} chunk
-	* @returns {Promise<any>}
-	*/
 	  write(chunk: any): Promise<any>;
-	/**
-	* @returns {Promise<any>}
-	*/
 	  close(): Promise<any>;
-	/**
-	* @param {any} reason
-	* @returns {Promise<any>}
-	*/
 	  abort(reason: any): Promise<any>;
 	}
-	/**
-	*/
 	export class IntoUnderlyingSource {
+	  private constructor();
 	  free(): void;
-	/**
-	* @param {any} controller
-	* @returns {Promise<any>}
-	*/
-	  pull(controller: any): Promise<any>;
-	/**
-	*/
+	  pull(controller: ReadableStreamDefaultController): Promise<any>;
 	  cancel(): void;
 	}
-	/**
-	* Raw options for [`pipeTo()`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/pipeTo).
-	*/
-	export class PipeOptions {
-	  free(): void;
-	/**
-	*/
-	  readonly preventAbort: boolean;
-	/**
-	*/
-	  readonly preventCancel: boolean;
-	/**
-	*/
-	  readonly preventClose: boolean;
-	/**
-	*/
-	  readonly signal: AbortSignal | undefined;
-	}
-	/**
-	*/
 	export class Provider {
+	  private constructor();
 	  free(): void;
-	/**
-	* @param {string} private_key
-	* @param {string} address
-	* @returns {Promise<Account>}
-	*/
+	  /**
+	   * Creates a new account instance with the given private key and address
+	   *
+	   * # Parameters
+	   * * `private_key` - Private key as hex string
+	   * * `address` - Account address as hex string
+	   *
+	   * # Returns
+	   * Result containing Account instance or error
+	   */
 	  createAccount(private_key: string, address: string): Promise<Account>;
-	/**
-	* @param {Call} call
-	* @param {BlockId} block_id
-	* @returns {Promise<Array<any>>}
-	*/
+	  /**
+	   * Calls a Starknet contract view function
+	   *
+	   * # Parameters
+	   * * `call` - Call parameters including contract address and function
+	   * * `block_id` - Block identifier for the call
+	   *
+	   * # Returns
+	   * Result containing array of field elements or error
+	   */
 	  call(call: Call, block_id: BlockId): Promise<Array<any>>;
-	/**
-	* @param {string} txn_hash
-	* @returns {Promise<boolean>}
-	*/
+	  /**
+	   * Waits for a transaction to be confirmed
+	   *
+	   * # Parameters
+	   * * `txn_hash` - Transaction hash as hex string
+	   *
+	   * # Returns
+	   * Result containing success boolean or error
+	   */
 	  waitForTransaction(txn_hash: string): Promise<boolean>;
 	}
-	/**
-	*/
-	export class QueuingStrategy {
-	  free(): void;
-	/**
-	*/
-	  readonly highWaterMark: number;
-	}
-	/**
-	* Raw options for [`getReader()`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/getReader).
-	*/
-	export class ReadableStreamGetReaderOptions {
-	  free(): void;
-	/**
-	*/
-	  readonly mode: any;
-	}
-	/**
-	*/
 	export class Subscription {
+	  private constructor();
 	  free(): void;
-	/**
-	*/
+	  /**
+	   * Cancels an active subscription
+	   */
 	  cancel(): void;
-	/**
-	*/
-	  id: bigint;
 	}
-	/**
-	*/
 	export class ToriiClient {
+	  private constructor();
 	  free(): void;
-	/**
-	* @param {Query} query
-	* @returns {Promise<Entities>}
-	*/
+	  /**
+	   * Gets token information for the given contract addresses
+	   *
+	   * # Parameters
+	   * * `contract_addresses` - Array of contract addresses as hex strings
+	   *
+	   * # Returns
+	   * Result containing token information or error
+	   */
+	  getTokens(contract_addresses: (string)[]): Promise<Tokens>;
+	  /**
+	   * Gets token balances for given accounts and contracts
+	   *
+	   * # Parameters
+	   * * `account_addresses` - Array of account addresses as hex strings
+	   * * `contract_addresses` - Array of contract addresses as hex strings
+	   *
+	   * # Returns
+	   * Result containing token balances or error
+	   */
+	  getTokenBalances(account_addresses: (string)[], contract_addresses: (string)[]): Promise<TokenBalances>;
+	  /**
+	   * Queries entities based on the provided query parameters
+	   *
+	   * # Parameters
+	   * * `query` - Query parameters for filtering entities
+	   *
+	   * # Returns
+	   * Result containing matching entities or error
+	   */
 	  getEntities(query: Query): Promise<Entities>;
-	/**
-	* @param {number} limit
-	* @param {number} offset
-	* @returns {Promise<Entities>}
-	*/
+	  /**
+	   * Gets all entities with pagination
+	   *
+	   * # Parameters
+	   * * `limit` - Maximum number of entities to return
+	   * * `offset` - Number of entities to skip
+	   *
+	   * # Returns
+	   * Result containing paginated entities or error
+	   */
 	  getAllEntities(limit: number, offset: number): Promise<Entities>;
-	/**
-	* @param {Query} query
-	* @returns {Promise<Entities>}
-	*/
-	  getEventMessages(query: Query): Promise<Entities>;
-	/**
-	* @param {(EntityKeysClause)[]} clauses
-	* @param {Function} callback
-	* @returns {Promise<Subscription>}
-	*/
+	  /**
+	   * Gets event messages based on query parameters
+	   *
+	   * # Parameters
+	   * * `query` - Query parameters for filtering messages
+	   * * `historical` - Whether to include historical messages
+	   *
+	   * # Returns
+	   * Result containing matching event messages or error
+	   */
+	  getEventMessages(query: Query, historical: boolean): Promise<Entities>;
+	  /**
+	   * Subscribes to entity updates
+	   *
+	   * # Parameters
+	   * * `clauses` - Array of key clauses for filtering updates
+	   * * `callback` - JavaScript function to call on updates
+	   *
+	   * # Returns
+	   * Result containing subscription handle or error
+	   */
 	  onEntityUpdated(clauses: (EntityKeysClause)[], callback: Function): Promise<Subscription>;
-	/**
-	* @param {Subscription} subscription
-	* @param {(EntityKeysClause)[]} clauses
-	* @returns {Promise<void>}
-	*/
+	  /**
+	   * Updates an existing entity subscription
+	   *
+	   * # Parameters
+	   * * `subscription` - Existing subscription to update
+	   * * `clauses` - New array of key clauses for filtering
+	   *
+	   * # Returns
+	   * Result containing unit or error
+	   */
 	  updateEntitySubscription(subscription: Subscription, clauses: (EntityKeysClause)[]): Promise<void>;
-	/**
-	* @param {(EntityKeysClause)[]} clauses
-	* @param {Function} callback
-	* @returns {Promise<Subscription>}
-	*/
-	  onEventMessageUpdated(clauses: (EntityKeysClause)[], callback: Function): Promise<Subscription>;
-	/**
-	* @param {Subscription} subscription
-	* @param {(EntityKeysClause)[]} clauses
-	* @returns {Promise<void>}
-	*/
-	  updateEventMessageSubscription(subscription: Subscription, clauses: (EntityKeysClause)[]): Promise<void>;
-	/**
-	* @param {string} message
-	* @param {Signature} signature
-	* @returns {Promise<Uint8Array>}
-	*/
-	  publishMessage(message: string, signature: Signature): Promise<Uint8Array>;
+	  /**
+	   * Subscribes to event message updates
+	   *
+	   * # Parameters
+	   * * `clauses` - Array of key clauses for filtering updates
+	   * * `historical` - Whether to include historical messages
+	   * * `callback` - JavaScript function to call on updates
+	   *
+	   * # Returns
+	   * Result containing subscription handle or error
+	   */
+	  onEventMessageUpdated(clauses: (EntityKeysClause)[], historical: boolean, callback: Function): Promise<Subscription>;
+	  /**
+	   * Updates an existing event message subscription
+	   *
+	   * # Parameters
+	   * * `subscription` - Existing subscription to update
+	   * * `clauses` - New array of key clauses for filtering
+	   * * `historical` - Whether to include historical messages
+	   *
+	   * # Returns
+	   * Result containing unit or error
+	   */
+	  updateEventMessageSubscription(subscription: Subscription, clauses: (EntityKeysClause)[], historical: boolean): Promise<void>;
+	  /**
+	   * Subscribes to Starknet events
+	   *
+	   * # Parameters
+	   * * `clauses` - Array of key clauses for filtering events
+	   * * `callback` - JavaScript function to call on events
+	   *
+	   * # Returns
+	   * Result containing subscription handle or error
+	   */
+	  onStarknetEvent(clauses: (EntityKeysClause)[], callback: Function): Promise<Subscription>;
+	  /**
+	   * Subscribes to indexer updates
+	   *
+	   * # Parameters
+	   * * `contract_address` - Optional contract address to filter updates
+	   * * `callback` - JavaScript function to call on updates
+	   *
+	   * # Returns
+	   * Result containing subscription handle or error
+	   */
+	  onIndexerUpdated(contract_address: string | undefined, callback: Function): Promise<Subscription>;
+	  /**
+	   * Publishes a message to the network
+	   *
+	   * # Parameters
+	   * * `message` - Message to publish as JSON string
+	   * * `signature` - Array of signature field elements as hex strings
+	   *
+	   * # Returns
+	   * Result containing message ID as byte array or error
+	   */
+	  publishMessage(message: string, signature: (string)[]): Promise<Uint8Array>;
 	}
 	
 }
@@ -394,6 +575,7 @@ declare type InitInput = RequestInfo | URL | Response | BufferSource | WebAssemb
 
 declare interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly clientconfig_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
   readonly typedDataEncode: (a: number, b: number, c: number, d: number, e: number) => void;
   readonly signingKeyNew: (a: number) => void;
   readonly signingKeySign: (a: number, b: number, c: number, d: number, e: number) => void;
@@ -418,63 +600,58 @@ declare interface InitOutput {
   readonly starknetKeccak: (a: number, b: number) => void;
   readonly cairoShortStringToFelt: (a: number, b: number, c: number) => void;
   readonly parseCairoShortString: (a: number, b: number, c: number) => void;
+  readonly toriiclient_getTokens: (a: number, b: number, c: number) => number;
+  readonly toriiclient_getTokenBalances: (a: number, b: number, c: number, d: number, e: number) => number;
   readonly toriiclient_getEntities: (a: number, b: number) => number;
   readonly toriiclient_getAllEntities: (a: number, b: number, c: number) => number;
-  readonly toriiclient_getEventMessages: (a: number, b: number) => number;
+  readonly toriiclient_getEventMessages: (a: number, b: number, c: number) => number;
   readonly toriiclient_onEntityUpdated: (a: number, b: number, c: number, d: number) => number;
   readonly toriiclient_updateEntitySubscription: (a: number, b: number, c: number, d: number) => number;
-  readonly toriiclient_onEventMessageUpdated: (a: number, b: number, c: number, d: number) => number;
-  readonly toriiclient_updateEventMessageSubscription: (a: number, b: number, c: number, d: number) => number;
-  readonly toriiclient_publishMessage: (a: number, b: number, c: number, d: number) => number;
+  readonly toriiclient_onEventMessageUpdated: (a: number, b: number, c: number, d: number, e: number) => number;
+  readonly toriiclient_updateEventMessageSubscription: (a: number, b: number, c: number, d: number, e: number) => number;
+  readonly toriiclient_onStarknetEvent: (a: number, b: number, c: number, d: number) => number;
+  readonly toriiclient_onIndexerUpdated: (a: number, b: number, c: number, d: number) => number;
+  readonly toriiclient_publishMessage: (a: number, b: number, c: number, d: number, e: number) => number;
   readonly subscription_cancel: (a: number) => void;
   readonly createClient: (a: number) => number;
-  readonly __wbg_toriiclient_free: (a: number) => void;
-  readonly __wbg_provider_free: (a: number) => void;
-  readonly __wbg_account_free: (a: number) => void;
-  readonly __wbg_subscription_free: (a: number) => void;
-  readonly __wbg_get_subscription_id: (a: number) => number;
-  readonly __wbg_set_subscription_id: (a: number, b: number) => void;
-  readonly __wbg_intounderlyingbytesource_free: (a: number) => void;
-  readonly intounderlyingbytesource_type: (a: number, b: number) => void;
+  readonly __wbg_toriiclient_free: (a: number, b: number) => void;
+  readonly __wbg_provider_free: (a: number, b: number) => void;
+  readonly __wbg_account_free: (a: number, b: number) => void;
+  readonly __wbg_subscription_free: (a: number, b: number) => void;
+  readonly __wbg_intounderlyingbytesource_free: (a: number, b: number) => void;
+  readonly intounderlyingbytesource_type: (a: number) => number;
   readonly intounderlyingbytesource_autoAllocateChunkSize: (a: number) => number;
   readonly intounderlyingbytesource_start: (a: number, b: number) => void;
   readonly intounderlyingbytesource_pull: (a: number, b: number) => number;
   readonly intounderlyingbytesource_cancel: (a: number) => void;
-  readonly __wbg_queuingstrategy_free: (a: number) => void;
-  readonly queuingstrategy_highWaterMark: (a: number) => number;
-  readonly __wbg_intounderlyingsink_free: (a: number) => void;
+  readonly __wbg_intounderlyingsource_free: (a: number, b: number) => void;
+  readonly intounderlyingsource_pull: (a: number, b: number) => number;
+  readonly intounderlyingsource_cancel: (a: number) => void;
+  readonly __wbg_intounderlyingsink_free: (a: number, b: number) => void;
   readonly intounderlyingsink_write: (a: number, b: number) => number;
   readonly intounderlyingsink_close: (a: number) => number;
   readonly intounderlyingsink_abort: (a: number, b: number) => number;
-  readonly __wbg_intounderlyingsource_free: (a: number) => void;
-  readonly intounderlyingsource_pull: (a: number, b: number) => number;
-  readonly intounderlyingsource_cancel: (a: number) => void;
-  readonly __wbg_readablestreamgetreaderoptions_free: (a: number) => void;
-  readonly readablestreamgetreaderoptions_mode: (a: number) => number;
-  readonly __wbg_pipeoptions_free: (a: number) => void;
-  readonly pipeoptions_preventClose: (a: number) => number;
-  readonly pipeoptions_preventCancel: (a: number) => number;
-  readonly pipeoptions_preventAbort: (a: number) => number;
-  readonly pipeoptions_signal: (a: number) => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
-  readonly __wbindgen_export_2: WebAssembly.Table;
-  readonly _dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h30748262f1b7d27c: (a: number, b: number, c: number) => void;
-  readonly _dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hb74b4e0cfb480659: (a: number, b: number) => void;
-  readonly _dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hcbe5adb8ab3b7d0e: (a: number, b: number, c: number) => void;
-  readonly _dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h0616717051788241: (a: number, b: number, c: number) => void;
+  readonly __wbindgen_exn_store: (a: number) => void;
+  readonly __wbindgen_export_3: WebAssembly.Table;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
-  readonly __wbindgen_exn_store: (a: number) => void;
-  readonly wasm_bindgen__convert__closures__invoke2_mut__h3e82d67bb2b557d3: (a: number, b: number, c: number, d: number) => void;
+  readonly _dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hdd36548e68818caf: (a: number, b: number) => void;
+  readonly _dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h57f21cd7c8b9ea8e: (a: number, b: number, c: number) => void;
+  readonly _dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h8e06c60ba0f5003f: (a: number, b: number, c: number) => void;
+  readonly _dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h8045929816b5fbae: (a: number, b: number) => void;
+  readonly _dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hae2f4ec6e71d3739: (a: number, b: number, c: number) => void;
+  readonly _dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hf76e1f80e8c3e0a1: (a: number, b: number, c: number) => void;
+  readonly wasm_bindgen__convert__closures__invoke2_mut__h49e145a35b1c793c: (a: number, b: number, c: number, d: number) => void;
 }
 
 /**
 * If `module_or_path` is {RequestInfo} or {URL}, makes a request and
 * for everything else, calls `WebAssembly.instantiate` directly.
 *
-* @param {InitInput | Promise<InitInput>} module_or_path
+* @param {{ module_or_path: InitInput | Promise<InitInput> }} module_or_path - Passing `InitInput` directly is deprecated.
 *
 * @returns {Promise<InitOutput>}
 */
-declare function wasm_bindgen (module_or_path?: InitInput | Promise<InitInput>): Promise<InitOutput>;
+declare function wasm_bindgen (module_or_path?: { module_or_path: InitInput | Promise<InitInput> } | InitInput | Promise<InitInput>): Promise<InitOutput>;

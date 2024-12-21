@@ -27,8 +27,8 @@ public class DojoWorker : MonoBehaviour
     void Start()
     {
         worldManager.synchronizationMaster.OnEntitySpawned.AddListener(HandleSpawn);
-        worldManager.synchronizationMaster.OnModelUpdated.AddListener(HandleUpdate);
-        worldManager.synchronizationMaster.OnEventMessage.AddListener(HandleEvent);
+        // worldManager.synchronizationMaster.OnModelUpdated.AddListener(HandleUpdate);
+        // worldManager.synchronizationMaster.OnEventMessage.AddListener(HandleEvent);
     }
 
     async void HandleSpawn(GameObject spownedEntity)

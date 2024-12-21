@@ -22,3 +22,6 @@ MonoBehaviour:
     limit: 100
     offset: 0
     dont_include_hashed_keys: 0
+    order_by: []
+    entity_models: []
+    entity_updated_after: 0
