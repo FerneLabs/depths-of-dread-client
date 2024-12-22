@@ -90,10 +90,14 @@ public class UIManager : MonoBehaviour
     public async void HandleNewFloor()
     {
         await dojoWorker.SyncLocalEntities();
-        var gameFloor = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        // var gameFloor = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        var gameFloor = WorldSimulator.instance.gameFloor;
+        var gameCoins = WorldSimulator.instance.gameCoins;
         if (gameFloor == null) { Debug.LogWarning("Game floor is null"); }
 
         RenderGameGrid(gameFloor);
+        RenderCoins(gameCoins.coins);
+        HandleStateUpdate();
 
         var hintText = "";
         foreach (Direction direction in gameFloor.path)
@@ -106,7 +110,7 @@ public class UIManager : MonoBehaviour
 
     public void HandleFloorCleared(depths_of_dread_PlayerState playerState)
     {
-        SetText("GS-Modal-FloorClearedText", $"Floor #{playerState.current_floor - 1} cleared");
+        SetText("GS-Modal-FloorClearedText", $"Floor #{playerState.current_floor} cleared");
         ShowModal("GS-Modal-FloorCleared");
     }
 
@@ -163,15 +167,16 @@ public class UIManager : MonoBehaviour
 
     void DestroyCoins() => GameObject.FindGameObjectsWithTag("GS-Coin").ToList().ForEach(coinInstance => Destroy(coinInstance));
 
-    public void HandleStateUpdate(depths_of_dread_PlayerData playerData, depths_of_dread_PlayerState playerState)
+    public void HandleStateUpdate()
     {
+        var playerData = dojoWorker.playerEntity.GetComponent<depths_of_dread_PlayerData>();
+        var playerState = WorldSimulator.instance.playerState;
+
         SetText("GS-UsernameText", HexToASCII(playerData.username.Hex()));
         SetText("GS-GameFloorText", $"Floor: {playerState.current_floor}");
         SetText("GS-CoinsText", $"Coins: {playerState.coins}");
 
-        // Temp until we use events
-        Vector3 targetPosition = new(playerState.position.x, playerState.position.y, 0);
-        character.GetComponent<MovementScript>().Move(targetPosition);
+        character.GetComponent<MovementScript>().Move(playerState.position.ToVector3());
     }
 
     // Function for handling event based movement
@@ -188,10 +193,11 @@ public class UIManager : MonoBehaviour
         ShowModal("GS-Modal-Error");
     }
 
-    public async void HandleGameover()
+    public void HandleGameover()
     {
-        await dojoWorker.SyncLocalEntities();
-        var gameData = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameData>();
+        // await dojoWorker.SyncLocalEntities();
+        // var gameData = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameData>();
+        var gameData = WorldSimulator.instance.gameData;
         int runtime = (int)(gameData.end_time - gameData.start_time);
 
         SetText("GS-Modal-GameoverScoreText", $"Score: {gameData.total_score}");
@@ -210,6 +216,8 @@ public class UIManager : MonoBehaviour
         grid.transform.localScale = new Vector3(1, 1, 1);
         grid.transform.position = new Vector3(0, 0, 0);
         ScreenManager.instance.SetActiveScreen("MainScreen");
+
         dojoWorker.gameEntity = null;
+        WorldSimulator.instance.ClearGameEntity();
     }
 }

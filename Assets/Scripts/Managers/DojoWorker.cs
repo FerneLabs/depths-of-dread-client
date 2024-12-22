@@ -19,7 +19,7 @@ public class DojoWorker : MonoBehaviour
     [SerializeField] DojoWorkerData dojoWorkerData;
     public Actions actions;
     public JsonRpcClient provider;
-    private Account account;
+    public Account account;
     public GameObject playerEntity;
     public GameObject gameEntity;
     private int localCurrentFloor = 1; // Temporary workaround until we can use events.
@@ -150,6 +150,7 @@ public class DojoWorker : MonoBehaviour
             {
                 WorldSimulator.instance.InitializeInstance(
                     playerEntity.GetComponent<depths_of_dread_PlayerState>(),
+                    gameEntity.GetComponent<depths_of_dread_GameData>(),
                     gameEntity.GetComponent<depths_of_dread_GameFloor>(),
                     gameEntity.GetComponent<depths_of_dread_GameCoins>(),
                     gameEntity.GetComponent<depths_of_dread_GameObstacles>()
@@ -200,15 +201,15 @@ public class DojoWorker : MonoBehaviour
         var txnHash = await actions.create_game(account);
         await provider.WaitForTransaction(txnHash);
 
-        if (gameEntity != null)
-        {
-            ScreenManager.instance.SetActiveScreen("GameOverlay");
-            UIManager.instance.HandleNewFloor();
-        }
-        else
-        {
-            Debug.LogWarning("Game entity is null");
-        }
+        // if (gameEntity != null)
+        // {
+        //     ScreenManager.instance.SetActiveScreen("GameOverlay");
+        //     UIManager.instance.HandleNewFloor();
+        // }
+        // else
+        // {
+        //     Debug.LogWarning("Game entity is null");
+        // }
     }
 
     public async void EndGame()
@@ -217,10 +218,17 @@ public class DojoWorker : MonoBehaviour
         UIManager.instance.HandleExitGame();
     }
 
-    public async void Move(int direction)
+    public void Move(int direction)
     {
         Direction dir = (Direction)Direction.FromIndex(typeof(Direction), direction);
-        await actions.move(account, dir);
+
+        // verify if can move
+        if (!WorldSimulator.instance.CanMove(dir)) { return; }
+
+        // send move to simulator
+        WorldSimulator.instance.SimulateMove(dir);
+
+        // await actions.move(account, dir);
     }
 
     void OnPlayerDataUpdate()
@@ -264,13 +272,15 @@ public class DojoWorker : MonoBehaviour
         //     return;
         // }
 
-        // // Floor is cleared
-        // // Temporary workaround until we can use events
-        // if (localCurrentFloor < playerState.current_floor && playerState.current_floor > 1)
-        // {
-        //     localCurrentFloor = playerState.current_floor;
-        //     UIManager.instance.HandleFloorCleared(playerState);
-        // }
+        // Floor is cleared
+        // Temporary workaround until we can use events
+        if (localCurrentFloor < playerState.current_floor && playerState.current_floor > 1)
+        {
+            Debug.Log("received new floor, sending flag to simulator");
+            localCurrentFloor = playerState.current_floor;
+            WorldSimulator.instance.floorCleared = true;
+            // UIManager.instance.HandleFloorCleared(playerState);
+        }
 
         // UIManager.instance.HandleStateUpdate(playerData, playerState);
         // Debug.Log($"Updated player state");
