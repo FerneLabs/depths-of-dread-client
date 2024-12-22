@@ -16,6 +16,6 @@ namespace Dojo
         public string relayWebrtcUrl;
         [Header("World")]
         public FieldElement worldAddress;
-        public Query query = new Query();
+        public Query query = new Query(100, 0);
     }
 }

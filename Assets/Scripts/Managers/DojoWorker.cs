@@ -27,8 +27,8 @@ public class DojoWorker : MonoBehaviour
     void Start()
     {
         worldManager.synchronizationMaster.OnEntitySpawned.AddListener(HandleSpawn);
-        // worldManager.synchronizationMaster.OnModelUpdated.AddListener(HandleUpdate);
-        // worldManager.synchronizationMaster.OnEventMessage.AddListener(HandleEvent);
+        worldManager.synchronizationMaster.OnModelUpdated.AddListener(HandleUpdate);
+        worldManager.synchronizationMaster.OnEventMessage.AddListener(HandleEvent);
     }
 
     async void HandleSpawn(GameObject spownedEntity)
@@ -145,6 +145,17 @@ public class DojoWorker : MonoBehaviour
             OnGameCoinsUpdate();
 
             Debug.Log($"Synced gameEntity {gameEntity}");
+
+            if (!WorldSimulator.instance.IsInitialized())
+            {
+                WorldSimulator.instance.InitializeInstance(
+                    playerEntity.GetComponent<depths_of_dread_PlayerState>(),
+                    gameEntity.GetComponent<depths_of_dread_GameFloor>(),
+                    gameEntity.GetComponent<depths_of_dread_GameCoins>(),
+                    gameEntity.GetComponent<depths_of_dread_GameObstacles>()
+                );
+            }
+
         }
     }
 
@@ -232,57 +243,56 @@ public class DojoWorker : MonoBehaviour
         if (playerState == null || playerData == null) { return; }
 
         // Redirect to Game screen if player has an ongoing game
-        if (playerState.game_id != 0 && ScreenManager.instance.currentScreen != "GameOverlay")
-        {
-            ScreenManager.instance.SetActiveScreen("GameOverlay");
-            UIManager.instance.HandleNewFloor();
-            UIManager.instance.HandleStateUpdate(playerData, playerState);
-            return;
-        }
+        // if (playerState.game_id != 0 && ScreenManager.instance.currentScreen != "GameOverlay")
+        // {
+        //     ScreenManager.instance.SetActiveScreen("GameOverlay");
+        //     UIManager.instance.HandleNewFloor();
+        //     UIManager.instance.HandleStateUpdate(playerData, playerState);
+        //     return;
+        // }
 
-        // Gameover is triggered
-        if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
-        {
-            UIManager.instance.HandleGameover();
-            return;
-        }
+        // // Gameover is triggered
+        // if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
+        // {
+        //     UIManager.instance.HandleGameover();
+        //     return;
+        // }
 
-        // Update UI only if we are in Game screen
-        if (ScreenManager.instance.currentScreen != "GameOverlay")
-        {
-            return;
-        }
+        // // Update UI only if we are in Game screen
+        // if (ScreenManager.instance.currentScreen != "GameOverlay")
+        // {
+        //     return;
+        // }
 
-        // Floor is cleared
-        // Temporary workaround until we can use events
-        if (localCurrentFloor < playerState.current_floor && playerState.current_floor > 1)
-        {
-            localCurrentFloor = playerState.current_floor;
-            UIManager.instance.HandleFloorCleared(playerState);
-        }
+        // // Floor is cleared
+        // // Temporary workaround until we can use events
+        // if (localCurrentFloor < playerState.current_floor && playerState.current_floor > 1)
+        // {
+        //     localCurrentFloor = playerState.current_floor;
+        //     UIManager.instance.HandleFloorCleared(playerState);
+        // }
 
-        UIManager.instance.HandleStateUpdate(playerData, playerState);
-        Debug.Log($"Updated player state");
+        // UIManager.instance.HandleStateUpdate(playerData, playerState);
+        // Debug.Log($"Updated player state");
     }
 
     void OnPlayerPowerUpsUpdate()
     {
-        Debug.Log($"Updated player powerups");
+        // Debug.Log($"Updated player powerups");
     }
 
     void OnGameDataUpdate()
     {
-
-        Debug.Log($"Updated game data");
+        // Debug.Log($"Updated game data");
     }
 
     void OnGameFloorUpdate()
     {
-        var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        // var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
 
-        if (gameFloor.size.x == 0) {
-            UIManager.instance.HandleError("gamefloor size is zero");
-        }
+        // if (gameFloor.size.x == 0) {
+        //     UIManager.instance.HandleError("gamefloor size is zero");
+        // }
         // if (gameFloor == null) { Debug.Log("Game floor is null"); return; }
         // if (gameFloor.game_id != playerState.game_id) { 
         //     Debug.LogWarning("Game floor ID does not match with playerState ID. Force syncing entity state.");
@@ -297,13 +307,13 @@ public class DojoWorker : MonoBehaviour
 
     void OnGameCoinsUpdate()
     {
-        var gameCoins = gameEntity.GetComponent<depths_of_dread_GameCoins>();
-        UIManager.instance.RenderCoins(gameCoins.coins);
-        Debug.Log($"Updated game coins");
+        // var gameCoins = gameEntity.GetComponent<depths_of_dread_GameCoins>();
+        // UIManager.instance.RenderCoins(gameCoins.coins);
+        // Debug.Log($"Updated game coins");
     }
 
     void OnGameObstaclesUpdate()
     {
-        Debug.Log($"Updated game obstacles");
+        // Debug.Log($"Updated game obstacles");
     }
 }
