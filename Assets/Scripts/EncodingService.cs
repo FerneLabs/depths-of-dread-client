@@ -37,7 +37,6 @@ class EncodingService
     public static BigInteger ASCIIToBigInt(string ascii)
     {
         byte[] bytes = Encoding.UTF8.GetBytes(ascii);
-        UnityEngine.Debug.Log($"Bytes: {bytes.Length}");
         Array.Reverse(bytes); // Little endiand encoding goes back to front
         return new(bytes, isUnsigned: true);
     }

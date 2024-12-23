@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Enum = Dojo.Starknet.Enum;
 using BigInteger = System.Numerics.BigInteger;
+using static ObstacleType;
 
 // Type definition for `depths_of_dread::models::PowerUp` struct
 [Serializable]
@@ -23,6 +24,18 @@ public abstract record PowerUpType() : Enum {
     public record PoisonDefense() : PowerUpType;
     public record None() : PowerUpType;
     public record Wings() : PowerUpType;
+    
+    public bool HandlesObstacle(ObstacleType obstacleType) {
+        return this switch
+        {
+            Shield => obstacleType is RangeTrap,
+            Sword => obstacleType is MeleeEnemy,
+            Wings => obstacleType is NoTile,
+            PoisonDefense => obstacleType is PoisonTrap,
+            FireDefense => obstacleType is FireTrap,
+            _ => false,
+        };
+    }
 }
 
 

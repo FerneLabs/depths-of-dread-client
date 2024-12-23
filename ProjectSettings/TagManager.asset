@@ -39,6 +39,9 @@ TagManager:
   - GS-Modal-Error
   - GS-Modal-ErrorText
   - GS-Coin
+  - GS-Modal-Verification
+  - GS-Modal-VerificationText
+  - GS-JoystickContainer
   layers:
   - Default
   - TransparentFX

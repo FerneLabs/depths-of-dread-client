@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Net.Mail;
 using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
-using bottlenoselabs.C2CS.Runtime;
 using Dojo;
 using Dojo.Starknet;
-using Dojo.Torii;
-using TMPro;
 using UnityEngine;
 using static EncodingService;
 
@@ -19,7 +12,7 @@ public class DojoWorker : MonoBehaviour
     [SerializeField] DojoWorkerData dojoWorkerData;
     public Actions actions;
     public JsonRpcClient provider;
-    private Account account;
+    public Account account;
     public GameObject playerEntity;
     public GameObject gameEntity;
     private int localCurrentFloor = 1; // Temporary workaround until we can use events.
@@ -114,7 +107,7 @@ public class DojoWorker : MonoBehaviour
 
     public async Task SyncLocalEntities()
     {
-        var playerKey = account == null ? null : GetPoseidonHash(account.Address);
+        var playerKey = account != null ? GetPoseidonHash(account.Address) : null;
         await Task.Yield();
 
         var pEntity = GameObject.Find(playerKey);
@@ -131,13 +124,14 @@ public class DojoWorker : MonoBehaviour
         }
         await Task.Yield();
 
-        var playerState = playerEntity == null ? null : playerEntity.GetComponent<depths_of_dread_PlayerState>();
-        var gameKey = playerState == null ? null : GetPoseidonHash(new FieldElement(playerState.game_id));
+        var playerState = playerEntity != null ? playerEntity.GetComponent<depths_of_dread_PlayerState>() : null;
+        var gameKey = playerState != null ? GetPoseidonHash(new FieldElement(playerState.game_id)) : null;
         await Task.Yield();
 
         var gEntity = GameObject.Find(gameKey);
+        var gameData = gEntity != null ? gEntity.GetComponent<depths_of_dread_GameData>() : null;
 
-        if (gEntity != null && gEntity != gameEntity)
+        if (gEntity != null && gEntity != gameEntity && gameData.game_id != 0)
         {
             gameEntity = gEntity;
             OnGameDataUpdate();
@@ -145,8 +139,25 @@ public class DojoWorker : MonoBehaviour
             OnGameCoinsUpdate();
 
             Debug.Log($"Synced gameEntity {gameEntity}");
+
+            InitSimulator();
         }
     }
+
+    private void InitSimulator()
+    {
+        if (!WorldSimulator.instance.IsInitialized())
+        {
+            WorldSimulator.instance.InitializeInstance(
+                playerEntity.GetComponent<depths_of_dread_PlayerState>(),
+                playerEntity.GetComponent<depths_of_dread_PlayerPowerUps>(),
+                gameEntity.GetComponent<depths_of_dread_GameFloor>(),
+                gameEntity.GetComponent<depths_of_dread_GameCoins>(),
+                gameEntity.GetComponent<depths_of_dread_GameObstacles>()
+            );
+        }
+    }
+
 
     public async void SimulateControllerConnection(string username)
     {
@@ -186,19 +197,27 @@ public class DojoWorker : MonoBehaviour
             return;
         }
 
-        var txnHash = await actions.create_game(account);
-        await provider.WaitForTransaction(txnHash);
-
-        if (gameEntity != null)
+        if (!IsGameOngoing())
         {
-            ScreenManager.instance.SetActiveScreen("GameOverlay");
-            UIManager.instance.HandleNewFloor();
-        }
-        else
-        {
-            Debug.LogWarning("Game entity is null");
+            var txnHash = await actions.create_game(account);
+            await provider.WaitForTransaction(txnHash);
         }
     }
+
+    private bool IsGameOngoing()
+    {
+        GameObject[] entities = worldManager.Entities();
+        foreach (GameObject entity in entities)
+        {
+            var gameData = entity.GetComponent<depths_of_dread_GameData>();
+            if (gameData != null && gameData.player == account.Address && gameData.end_time == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public async void EndGame()
     {
@@ -206,10 +225,11 @@ public class DojoWorker : MonoBehaviour
         UIManager.instance.HandleExitGame();
     }
 
-    public async void Move(int direction)
+    public void Move(int direction)
     {
         Direction dir = (Direction)Direction.FromIndex(typeof(Direction), direction);
-        await actions.move(account, dir);
+        if (!WorldSimulator.instance.CanMove(dir)) { return; }
+        WorldSimulator.instance.SimulateMove(dir);
     }
 
     void OnPlayerDataUpdate()
@@ -231,79 +251,54 @@ public class DojoWorker : MonoBehaviour
         var playerData = playerEntity.GetComponent<depths_of_dread_PlayerData>();
         if (playerState == null || playerData == null) { return; }
 
-        // Redirect to Game screen if player has an ongoing game
-        if (playerState.game_id != 0 && ScreenManager.instance.currentScreen != "GameOverlay")
-        {
-            ScreenManager.instance.SetActiveScreen("GameOverlay");
-            UIManager.instance.HandleNewFloor();
-            UIManager.instance.HandleStateUpdate(playerData, playerState);
-            return;
-        }
-
         // Gameover is triggered
+        // Temporary workaround until we can use events
         if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
         {
-            UIManager.instance.HandleGameover();
-            return;
-        }
-
-        // Update UI only if we are in Game screen
-        if (ScreenManager.instance.currentScreen != "GameOverlay")
-        {
-            return;
+            Debug.Log("received gameover, sending flag to simulator");
+            WorldSimulator.instance.floorEndEvent = true;
         }
 
         // Floor is cleared
         // Temporary workaround until we can use events
         if (localCurrentFloor < playerState.current_floor && playerState.current_floor > 1)
         {
+            Debug.Log("received new floor, sending flag to simulator");
             localCurrentFloor = playerState.current_floor;
-            UIManager.instance.HandleFloorCleared(playerState);
+            WorldSimulator.instance.floorEndEvent = true;
         }
-
-        UIManager.instance.HandleStateUpdate(playerData, playerState);
-        Debug.Log($"Updated player state");
     }
 
     void OnPlayerPowerUpsUpdate()
     {
-        Debug.Log($"Updated player powerups");
+        // Debug.Log($"Updated player powerups");
     }
 
     void OnGameDataUpdate()
     {
-
-        Debug.Log($"Updated game data");
+        // Debug.Log($"Updated game data");
     }
 
     void OnGameFloorUpdate()
     {
+        InitSimulator(); // Update may take some time to arrive, so run init if simulator is not yet initialized
         var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
 
-        if (gameFloor.size.x == 0) {
+        if (gameFloor.size.x == 0)
+        {
             UIManager.instance.HandleError("gamefloor size is zero");
         }
-        // if (gameFloor == null) { Debug.Log("Game floor is null"); return; }
-        // if (gameFloor.game_id != playerState.game_id) { 
-        //     Debug.LogWarning("Game floor ID does not match with playerState ID. Force syncing entity state.");
-        //     SyncLocalEntities(); 
-        //     Debug.Log($"Entity mismatch corrected? {gameFloor.game_id == playerState.game_id}");
-        // }
-
-        // Debug.Log($"Going to render floor for ID {gameFloor.game_id}, size {gameFloor.size.x + 1}x{gameFloor.size.y + 1}");
-        // UIManager.instance.HandleNewFloor();
-        // Debug.Log($"Updated game floor");
     }
 
     void OnGameCoinsUpdate()
     {
-        var gameCoins = gameEntity.GetComponent<depths_of_dread_GameCoins>();
-        UIManager.instance.RenderCoins(gameCoins.coins);
-        Debug.Log($"Updated game coins");
+        InitSimulator(); // Update may take some time to arrive, so run init if simulator is not yet initialized
+        // Debug.Log($"Updated game coins");
     }
 
     void OnGameObstaclesUpdate()
     {
-        Debug.Log($"Updated game obstacles");
+        InitSimulator(); // Update may take some time to arrive, so run init if simulator is not yet initialized
+        // Debug.Log($"Updated game obstacles");
     }
 }
