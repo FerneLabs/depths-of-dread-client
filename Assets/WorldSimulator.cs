@@ -55,13 +55,12 @@ public class WorldSimulator : MonoBehaviour
 
         if (GameObject.Find("SimulatedData")) { Destroy(GameObject.Find("SimulatedData")); }
 
-        var entity = new GameObject("SimulatedData");
+        var entity = Instantiate(new GameObject("SimulatedData"), transform);
         AddModel(entity, playerState);
         AddModel(entity, playerPowerUps);
         AddModel(entity, gameFloor);
         AddModel(entity, gameCoins);
         AddModel(entity, gameObstacles);
-        entity.transform.parent = transform;
 
         this.playerState = entity.GetComponent<depths_of_dread_PlayerState>();
         this.playerPowerUps = entity.GetComponent<depths_of_dread_PlayerPowerUps>();

@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Net.Mail;
 using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
-using bottlenoselabs.C2CS.Runtime;
 using Dojo;
 using Dojo.Starknet;
-using Dojo.Torii;
-using TMPro;
 using UnityEngine;
 using static EncodingService;
 
@@ -147,19 +140,24 @@ public class DojoWorker : MonoBehaviour
 
             Debug.Log($"Synced gameEntity {gameEntity}");
 
-            if (!WorldSimulator.instance.IsInitialized())
-            {
-                WorldSimulator.instance.InitializeInstance(
-                    playerEntity.GetComponent<depths_of_dread_PlayerState>(),
-                    playerEntity.GetComponent<depths_of_dread_PlayerPowerUps>(),
-                    gameEntity.GetComponent<depths_of_dread_GameFloor>(),
-                    gameEntity.GetComponent<depths_of_dread_GameCoins>(),
-                    gameEntity.GetComponent<depths_of_dread_GameObstacles>()
-                );
-            }
-
+            InitSimulator();
         }
     }
+
+    private void InitSimulator()
+    {
+        if (!WorldSimulator.instance.IsInitialized())
+        {
+            WorldSimulator.instance.InitializeInstance(
+                playerEntity.GetComponent<depths_of_dread_PlayerState>(),
+                playerEntity.GetComponent<depths_of_dread_PlayerPowerUps>(),
+                gameEntity.GetComponent<depths_of_dread_GameFloor>(),
+                gameEntity.GetComponent<depths_of_dread_GameCoins>(),
+                gameEntity.GetComponent<depths_of_dread_GameObstacles>()
+            );
+        }
+    }
+
 
     public async void SimulateControllerConnection(string username)
     {
@@ -199,9 +197,27 @@ public class DojoWorker : MonoBehaviour
             return;
         }
 
-        var txnHash = await actions.create_game(account);
-        await provider.WaitForTransaction(txnHash);
+        if (!IsGameOngoing())
+        {
+            var txnHash = await actions.create_game(account);
+            await provider.WaitForTransaction(txnHash);
+        }
     }
+
+    private bool IsGameOngoing()
+    {
+        GameObject[] entities = worldManager.Entities();
+        foreach (GameObject entity in entities)
+        {
+            var gameData = entity.GetComponent<depths_of_dread_GameData>();
+            if (gameData != null && gameData.player == account.Address && gameData.end_time == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public async void EndGame()
     {
@@ -265,20 +281,24 @@ public class DojoWorker : MonoBehaviour
 
     void OnGameFloorUpdate()
     {
+        InitSimulator(); // Update may take some time to arrive, so run init if simulator is not yet initialized
         var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
 
-        if (gameFloor.size.x == 0) {
+        if (gameFloor.size.x == 0)
+        {
             UIManager.instance.HandleError("gamefloor size is zero");
         }
     }
 
     void OnGameCoinsUpdate()
     {
+        InitSimulator(); // Update may take some time to arrive, so run init if simulator is not yet initialized
         // Debug.Log($"Updated game coins");
     }
 
     void OnGameObstaclesUpdate()
     {
+        InitSimulator(); // Update may take some time to arrive, so run init if simulator is not yet initialized
         // Debug.Log($"Updated game obstacles");
     }
 }
