@@ -26,8 +26,8 @@ namespace Dojo
 
         public UnityEvent<List<GameObject>> OnSynchronized;
         public UnityEvent<GameObject> OnEntitySpawned;
-        public UnityEvent<ModelInstance> OnEventMessage;
         public UnityEvent<ModelInstance> OnModelUpdated;
+        public UnityEvent<ModelInstance> OnEventMessage;
 
         // Awake is called when the script instance is being loaded.
         void Awake()
@@ -131,7 +131,10 @@ namespace Dojo
         {
             foreach (var entityModel in entityModels)
             {
-                var model = models.FirstOrDefault(m => m.GetType().Name == entityModel.Name);
+                string[] parts = entityModel.Name.Split('-');
+                string @namespace = parts[0];
+                string name = parts[1];
+                var model = models.FirstOrDefault(m => m.GetType().Name == $"{@namespace}_{name}");
                 if (model == null)
                 {
                     Debug.LogWarning($"Model {entityModel.Name} not found");

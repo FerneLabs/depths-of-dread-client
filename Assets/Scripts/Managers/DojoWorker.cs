@@ -114,7 +114,7 @@ public class DojoWorker : MonoBehaviour
 
     public async Task SyncLocalEntities()
     {
-        var playerKey = account == null ? null : GetPoseidonHash(account.Address);
+        var playerKey = account != null ? GetPoseidonHash(account.Address) : null;
         await Task.Yield();
 
         var pEntity = GameObject.Find(playerKey);
@@ -131,13 +131,14 @@ public class DojoWorker : MonoBehaviour
         }
         await Task.Yield();
 
-        var playerState = playerEntity == null ? null : playerEntity.GetComponent<depths_of_dread_PlayerState>();
-        var gameKey = playerState == null ? null : GetPoseidonHash(new FieldElement(playerState.game_id));
+        var playerState = playerEntity != null ? playerEntity.GetComponent<depths_of_dread_PlayerState>() : null;
+        var gameKey = playerState != null ? GetPoseidonHash(new FieldElement(playerState.game_id)) : null;
         await Task.Yield();
 
         var gEntity = GameObject.Find(gameKey);
+        var gameData = gEntity != null ? gEntity.GetComponent<depths_of_dread_GameData>() : null;
 
-        if (gEntity != null && gEntity != gameEntity)
+        if (gEntity != null && gEntity != gameEntity && gameData.game_id != 0)
         {
             gameEntity = gEntity;
             OnGameDataUpdate();
@@ -150,7 +151,7 @@ public class DojoWorker : MonoBehaviour
             {
                 WorldSimulator.instance.InitializeInstance(
                     playerEntity.GetComponent<depths_of_dread_PlayerState>(),
-                    gameEntity.GetComponent<depths_of_dread_GameData>(),
+                    playerEntity.GetComponent<depths_of_dread_PlayerPowerUps>(),
                     gameEntity.GetComponent<depths_of_dread_GameFloor>(),
                     gameEntity.GetComponent<depths_of_dread_GameCoins>(),
                     gameEntity.GetComponent<depths_of_dread_GameObstacles>()
@@ -200,16 +201,6 @@ public class DojoWorker : MonoBehaviour
 
         var txnHash = await actions.create_game(account);
         await provider.WaitForTransaction(txnHash);
-
-        // if (gameEntity != null)
-        // {
-        //     ScreenManager.instance.SetActiveScreen("GameOverlay");
-        //     UIManager.instance.HandleNewFloor();
-        // }
-        // else
-        // {
-        //     Debug.LogWarning("Game entity is null");
-        // }
     }
 
     public async void EndGame()
@@ -221,14 +212,8 @@ public class DojoWorker : MonoBehaviour
     public void Move(int direction)
     {
         Direction dir = (Direction)Direction.FromIndex(typeof(Direction), direction);
-
-        // verify if can move
         if (!WorldSimulator.instance.CanMove(dir)) { return; }
-
-        // send move to simulator
         WorldSimulator.instance.SimulateMove(dir);
-
-        // await actions.move(account, dir);
     }
 
     void OnPlayerDataUpdate()
@@ -259,12 +244,13 @@ public class DojoWorker : MonoBehaviour
         //     return;
         // }
 
-        // // Gameover is triggered
-        // if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
-        // {
-        //     UIManager.instance.HandleGameover();
-        //     return;
-        // }
+        // Gameover is triggered
+        // Temporary workaround until we can use events
+        if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
+        {
+            Debug.Log("received gameover, sending flag to simulator");
+            WorldSimulator.instance.floorEndEvent = true;
+        }
 
         // // Update UI only if we are in Game screen
         // if (ScreenManager.instance.currentScreen != "GameOverlay")
@@ -278,8 +264,7 @@ public class DojoWorker : MonoBehaviour
         {
             Debug.Log("received new floor, sending flag to simulator");
             localCurrentFloor = playerState.current_floor;
-            WorldSimulator.instance.floorCleared = true;
-            // UIManager.instance.HandleFloorCleared(playerState);
+            WorldSimulator.instance.floorEndEvent = true;
         }
 
         // UIManager.instance.HandleStateUpdate(playerData, playerState);

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dojo;
 using Dojo.Starknet;
 using dojo_bindings;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class WorldSimulator : MonoBehaviour
@@ -12,11 +13,11 @@ public class WorldSimulator : MonoBehaviour
     [SerializeField] private DojoWorker dojoWorker;
 
     public depths_of_dread_PlayerState playerState;
-    public depths_of_dread_GameData gameData;
+    public depths_of_dread_PlayerPowerUps playerPowerUps;
     public depths_of_dread_GameFloor gameFloor;
     public depths_of_dread_GameCoins gameCoins;
     public depths_of_dread_GameObstacles gameObstacles;
-    public bool floorCleared = false;
+    public bool floorEndEvent = false;
     private readonly Queue<Func<Task>> _taskQueue = new();
     private bool _isProcessing = false;
 
@@ -30,28 +31,40 @@ public class WorldSimulator : MonoBehaviour
 
     public bool InitializeInstance(
         depths_of_dread_PlayerState playerState,
-        depths_of_dread_GameData gameData,
+        depths_of_dread_PlayerPowerUps playerPowerUps,
         depths_of_dread_GameFloor gameFloor,
         depths_of_dread_GameCoins gameCoins,
         depths_of_dread_GameObstacles gameObstacles)
     {
-        if (playerState == null || gameFloor == null || gameCoins == null || gameObstacles == null)
+        if (
+            playerState == null
+            || playerPowerUps == null
+            || gameFloor == null
+            || gameCoins == null
+            || gameObstacles == null
+        )
         {
-            Debug.LogError("Received null data");
+            Debug.LogError($"Received null data");
+            Debug.LogError($"playerState: {playerState}");
+            Debug.LogError($"playerPowerUps: {playerPowerUps}");
+            Debug.LogError($"gameFloor: {gameFloor}");
+            Debug.LogError($"gameCoins: {gameCoins}");
+            Debug.LogError($"gameObstacles: {gameObstacles}");
             return false;
         }
+
         if (GameObject.Find("SimulatedData")) { Destroy(GameObject.Find("SimulatedData")); }
 
         var entity = new GameObject("SimulatedData");
         AddModel(entity, playerState);
-        AddModel(entity, gameData);
+        AddModel(entity, playerPowerUps);
         AddModel(entity, gameFloor);
         AddModel(entity, gameCoins);
         AddModel(entity, gameObstacles);
         entity.transform.parent = transform;
 
         this.playerState = entity.GetComponent<depths_of_dread_PlayerState>();
-        this.gameData = entity.GetComponent<depths_of_dread_GameData>();
+        this.playerPowerUps = entity.GetComponent<depths_of_dread_PlayerPowerUps>();
         this.gameFloor = entity.GetComponent<depths_of_dread_GameFloor>();
         this.gameCoins = entity.GetComponent<depths_of_dread_GameCoins>();
         this.gameObstacles = entity.GetComponent<depths_of_dread_GameObstacles>();
@@ -106,16 +119,8 @@ public class WorldSimulator : MonoBehaviour
         // Send move to transaction queue
         EnqueueTask(() => SendMove(direction));
 
-        // Do the move
+        // Update position
         playerState.position.MoveTo(direction);
-        // Check for an obstacle
-        foreach (Obstacle obstacle in gameObstacles.instances)
-        {
-            if (Vec2.AreEqual(obstacle.position, playerState.position))
-            {
-                // Handle gameover
-            }
-        }
 
         // Check for a coin
         foreach (Vec2 coinPosition in gameCoins.coins)
@@ -135,12 +140,40 @@ public class WorldSimulator : MonoBehaviour
         // Update UI
         UIManager.instance.HandleStateUpdate();
 
+        // Check for an obstacle
+        foreach (Obstacle obstacle in gameObstacles.instances)
+        {
+            if (Vec2.AreEqual(obstacle.position, playerState.position))
+            {
+                foreach (PowerUp powerup in playerPowerUps.powers)
+                {
+                    if (powerup.power_type.HandlesObstacle(obstacle.obstacle_type))
+                    {
+                        // TODO: Trigger animation for handled obstacle
+                    }
+                    else
+                    {
+                        // TODO: Trigger animation for death
+
+                        // Handle gameover
+                        playerState.current_floor = 0;
+                        playerState.coins = 0;
+
+                        var isConfirmed = await ConfirmWorldState();
+                        if (!isConfirmed) { return; }
+
+                        UIManager.instance.HandleGameover();
+                    }
+                }
+            }
+        }
+
         // Check for new floor
         if (Vec2.AreEqual(playerState.position, gameFloor.end_tile))
         {
             playerState.current_floor++;
-            var isConfirmed = await ConfirmWorldState();
 
+            var isConfirmed = await ConfirmWorldState();
             if (!isConfirmed) { return; }
 
             SyncToWorldState();
@@ -150,18 +183,21 @@ public class WorldSimulator : MonoBehaviour
 
     async Task<bool> ConfirmWorldState()
     {
+        UIManager.instance.DisableJoystick(); // Is enabled again after showing hint modal
+
+        await Task.Delay(500); // Wait for move animation before modal pops up
         UIManager.instance.SetText("GS-Modal-VerificationText", "Waiting for the server response...");
         UIManager.instance.ShowModal("GS-Modal-Verification");
 
         Debug.Log("Waiting for updated world state...");
-        while (_isProcessing || !floorCleared)
+        while (_isProcessing || !floorEndEvent)
         {
             await Task.Yield();
         }
         Debug.Log("World updated");
 
         // reset flag
-        floorCleared = false;
+        floorEndEvent = false;
 
         var worldPlayerState = dojoWorker.playerEntity.GetComponent<depths_of_dread_PlayerState>();
         bool stateMatch = worldPlayerState.current_floor == playerState.current_floor
@@ -177,7 +213,9 @@ public class WorldSimulator : MonoBehaviour
         }
         else
         {
-            UIManager.instance.SetText("GS-Modal-VerificationText", $"State mismatch...\n{worldPlayerState.current_floor} / {playerState.current_floor}");
+            string floorMismatchText = $"\n{worldPlayerState.current_floor} / {playerState.current_floor}";
+            string coinMismatchText = $"\n{worldPlayerState.coins} / {playerState.coins}";
+            UIManager.instance.SetText("GS-Modal-VerificationText", $"State mismatch {floorMismatchText}{coinMismatchText}");
             return false;
         }
     }
@@ -201,7 +239,6 @@ public class WorldSimulator : MonoBehaviour
     {
         _taskQueue.Enqueue(task);
 
-        // Optionally, you can auto-start processing here
         if (!_isProcessing)
         {
             _ = ProcessQueue();

@@ -2,6 +2,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 using static EncodingService;
 
 public class UIManager : MonoBehaviour
@@ -187,17 +188,41 @@ public class UIManager : MonoBehaviour
     //     character.GetComponent<MovementScript>().Move(targetPosition);
     // }
 
+    public void EnableJoystick()
+    {
+        foreach (var element in uiElements)
+        {
+            if (element.CompareTag("GS-JoystickContainer")) {
+                foreach (Transform child in element.transform) {
+                    child.GetComponent<Button>().interactable = true;
+                }
+            }
+        }
+    }
+
+    public void DisableJoystick()
+    {
+        foreach (var element in uiElements)
+        {
+            if (element.CompareTag("GS-JoystickContainer")) {
+                foreach (Transform child in element.transform) {
+                    child.GetComponent<Button>().interactable = false;
+                }
+            }
+        }
+    }
+
     public void HandleError(string errorMessage)
     {
         SetText("GS-Modal-ErrorText", errorMessage);
         ShowModal("GS-Modal-Error");
     }
 
-    public void HandleGameover()
+    public async void HandleGameover()
     {
-        // await dojoWorker.SyncLocalEntities();
-        // var gameData = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameData>();
-        var gameData = WorldSimulator.instance.gameData;
+        await dojoWorker.SyncLocalEntities();
+        var gameData = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameData>();
+
         int runtime = (int)(gameData.end_time - gameData.start_time);
 
         SetText("GS-Modal-GameoverScoreText", $"Score: {gameData.total_score}");
@@ -210,6 +235,7 @@ public class UIManager : MonoBehaviour
     {
         HideModal("GS-Modal-Gameover");
         HideModal("GS-Modal-Error");
+        HideModal("GS-Modal-Verification");
         DestroyCoins();
         character.GetComponent<MovementScript>().Move(new Vector3(0, 0, 0));
         tilemap.ClearAllTiles();
