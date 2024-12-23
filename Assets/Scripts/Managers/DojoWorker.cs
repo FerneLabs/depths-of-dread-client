@@ -235,15 +235,6 @@ public class DojoWorker : MonoBehaviour
         var playerData = playerEntity.GetComponent<depths_of_dread_PlayerData>();
         if (playerState == null || playerData == null) { return; }
 
-        // Redirect to Game screen if player has an ongoing game
-        // if (playerState.game_id != 0 && ScreenManager.instance.currentScreen != "GameOverlay")
-        // {
-        //     ScreenManager.instance.SetActiveScreen("GameOverlay");
-        //     UIManager.instance.HandleNewFloor();
-        //     UIManager.instance.HandleStateUpdate(playerData, playerState);
-        //     return;
-        // }
-
         // Gameover is triggered
         // Temporary workaround until we can use events
         if (playerState.game_id == 0 && ScreenManager.instance.currentScreen == "GameOverlay")
@@ -251,12 +242,6 @@ public class DojoWorker : MonoBehaviour
             Debug.Log("received gameover, sending flag to simulator");
             WorldSimulator.instance.floorEndEvent = true;
         }
-
-        // // Update UI only if we are in Game screen
-        // if (ScreenManager.instance.currentScreen != "GameOverlay")
-        // {
-        //     return;
-        // }
 
         // Floor is cleared
         // Temporary workaround until we can use events
@@ -266,9 +251,6 @@ public class DojoWorker : MonoBehaviour
             localCurrentFloor = playerState.current_floor;
             WorldSimulator.instance.floorEndEvent = true;
         }
-
-        // UIManager.instance.HandleStateUpdate(playerData, playerState);
-        // Debug.Log($"Updated player state");
     }
 
     void OnPlayerPowerUpsUpdate()
@@ -283,27 +265,15 @@ public class DojoWorker : MonoBehaviour
 
     void OnGameFloorUpdate()
     {
-        // var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
+        var gameFloor = gameEntity.GetComponent<depths_of_dread_GameFloor>();
 
-        // if (gameFloor.size.x == 0) {
-        //     UIManager.instance.HandleError("gamefloor size is zero");
-        // }
-        // if (gameFloor == null) { Debug.Log("Game floor is null"); return; }
-        // if (gameFloor.game_id != playerState.game_id) { 
-        //     Debug.LogWarning("Game floor ID does not match with playerState ID. Force syncing entity state.");
-        //     SyncLocalEntities(); 
-        //     Debug.Log($"Entity mismatch corrected? {gameFloor.game_id == playerState.game_id}");
-        // }
-
-        // Debug.Log($"Going to render floor for ID {gameFloor.game_id}, size {gameFloor.size.x + 1}x{gameFloor.size.y + 1}");
-        // UIManager.instance.HandleNewFloor();
-        // Debug.Log($"Updated game floor");
+        if (gameFloor.size.x == 0) {
+            UIManager.instance.HandleError("gamefloor size is zero");
+        }
     }
 
     void OnGameCoinsUpdate()
     {
-        // var gameCoins = gameEntity.GetComponent<depths_of_dread_GameCoins>();
-        // UIManager.instance.RenderCoins(gameCoins.coins);
         // Debug.Log($"Updated game coins");
     }
 
