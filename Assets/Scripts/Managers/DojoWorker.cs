@@ -107,7 +107,10 @@ public class DojoWorker : MonoBehaviour
 
     public async Task SyncLocalEntities()
     {
-        var playerKey = account != null ? GetPoseidonHash(account.Address) : null;
+        var playerKey = "";
+        if (account != null) {
+            playerKey = GetPoseidonHash(account.Address);
+        }
         await Task.Yield();
 
         var pEntity = GameObject.Find(playerKey);

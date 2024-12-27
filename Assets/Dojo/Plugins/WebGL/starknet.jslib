@@ -142,7 +142,7 @@ mergeInto(LibraryManager.library, {
     return buffer;
   },
   PoseidonHash: function (str) {
-    const hash = wasm_bindgen.poseidonHash(UTF8ToString(str));
+    const hash = wasm_bindgen.poseidonHash([UTF8ToString(str)]);
     const bufferSize = lengthBytesUTF8(hash) + 1;
     const buffer = _malloc(bufferSize);
     stringToUTF8(hash, buffer, bufferSize);
