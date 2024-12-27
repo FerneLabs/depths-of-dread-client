@@ -42,6 +42,7 @@ TagManager:
   - GS-Modal-Verification
   - GS-Modal-VerificationText
   - GS-JoystickContainer
+  - GS-CharacterSprite
   layers:
   - Default
   - TransparentFX
