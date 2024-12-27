@@ -6,9 +6,10 @@ using UnityEngine;
 public class MovementScript : MonoBehaviour
 {
     public float moveSpeed = 5f; // Speed for smooth movement between tiles
+    public bool isMoving = false; // Check if movement is in progress
     Vector3 initialPositionOffset;
     Vector3 targetPosition; // Target position for each tile
-    bool isMoving = false; // Check if movement is in progress
+    
 
     private void Start()
     {

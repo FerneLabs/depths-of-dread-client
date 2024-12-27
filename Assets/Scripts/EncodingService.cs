@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
+using bottlenoselabs.C2CS.Runtime;
 using Dojo.Starknet;
 using dojo_bindings;
 using UnityEngine;
@@ -22,7 +23,7 @@ class EncodingService
         // Pad with a leading zero if the length is odd
         if (hex.Length % 2 != 0)
         {
-            hex = "0" + hex; 
+            hex = "0" + hex;
         }
 
         byte[] bytes = new byte[hex.Length / 2];
@@ -41,11 +42,27 @@ class EncodingService
         return new(bytes, isUnsigned: true);
     }
 
-    public static string GetPoseidonHash(FieldElement input) 
+    public static string GetPoseidonHash(FieldElement input)
+    {
+        #if UNITY_WEBGL && !UNITY_EDITOR
+            return WebPoseidon(input);
+        #else
+            return WindowsPoseidon(input);
+        #endif
+    }
+
+    private static string WebPoseidon(FieldElement input)
+    {
+        CString inputData = new(input.Hex());
+        FieldElement hash = new(StarknetInterop.PoseidonHash(inputData));
+        return hash.Hex();
+    }
+
+    private static string WindowsPoseidon(FieldElement input)
     {
         dojo.FieldElement[] inputFelts = { input.Inner };
 
-        unsafe 
+        unsafe
         {
             dojo.FieldElement* inputPtr;
             fixed (dojo.FieldElement* ptr = inputFelts)
@@ -57,35 +74,7 @@ class EncodingService
             dojo.FieldElement result = dojo.poseidon_hash(inputPtr, (UIntPtr)inputFelts.Length);
             FieldElement value = new(result);
             return value.Hex();
-        }   
-    }
-
-    private static dojo.FieldElement[] SplitIntoFieldElements(byte[] inputBytes)
-    {
-        // Define the maximum size for a single chunk (32 bytes)
-        const int maxChunkSize = 32;
-
-        // Calculate the number of chunks
-        int numberOfChunks = (inputBytes.Length + maxChunkSize - 1) / maxChunkSize;
-
-        dojo.FieldElement[] fieldElements = new dojo.FieldElement[numberOfChunks];
-
-        for (int i = 0; i < numberOfChunks; i++)
-        {
-            // Get the chunk of bytes (up to 32 bytes)
-            int start = i * maxChunkSize;
-            int length = Math.Min(maxChunkSize, inputBytes.Length - start);
-            byte[] chunk = new byte[length];
-            Array.Copy(inputBytes, start, chunk, 0, length);
-
-            // Convert chunk to BigInteger
-            BigInteger bigInt = new BigInteger(chunk, isUnsigned: true, isBigEndian: true);
-
-            // Ensure the BigInteger fits in a FieldElement (implementation of FieldElement assumed)
-            fieldElements[i] = new Dojo.Starknet.FieldElement(bigInt).Inner;
         }
-
-        return fieldElements;
     }
 
     public static string SecondsToTime(int seconds)

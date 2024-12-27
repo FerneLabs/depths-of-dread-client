@@ -1,9 +1,9 @@
 using System.Numerics;
-using System.Threading.Tasks;
 using Dojo;
 using Dojo.Starknet;
 using UnityEngine;
 using static EncodingService;
+using Cysharp.Threading.Tasks;
 
 public class DojoWorker : MonoBehaviour
 {
@@ -105,11 +105,10 @@ public class DojoWorker : MonoBehaviour
         // }
     }
 
-    public async Task SyncLocalEntities()
+    public async UniTask SyncLocalEntities()
     {
         var playerKey = account != null ? GetPoseidonHash(account.Address) : null;
-        await Task.Yield();
-
+        await UniTask.Yield();
         var pEntity = GameObject.Find(playerKey);
 
         // and if the entity matches the current player hashed key
@@ -122,11 +121,11 @@ public class DojoWorker : MonoBehaviour
 
             Debug.Log($"Synced playerEntity {playerEntity}");
         }
-        await Task.Yield();
+        await UniTask.Yield();
 
         var playerState = playerEntity != null ? playerEntity.GetComponent<depths_of_dread_PlayerState>() : null;
         var gameKey = playerState != null ? GetPoseidonHash(new FieldElement(playerState.game_id)) : null;
-        await Task.Yield();
+        await UniTask.Yield();
 
         var gEntity = GameObject.Find(gameKey);
         var gameData = gEntity != null ? gEntity.GetComponent<depths_of_dread_GameData>() : null;
@@ -158,7 +157,6 @@ public class DojoWorker : MonoBehaviour
         }
     }
 
-
     public async void SimulateControllerConnection(string username)
     {
         provider = new JsonRpcClient(dojoConfig.rpcUrl);
@@ -183,7 +181,7 @@ public class DojoWorker : MonoBehaviour
         UIManager.instance.HandleDisconnection();
     }
 
-    public async Task<FieldElement> CreatePlayer(string username)
+    public async UniTask<FieldElement> CreatePlayer(string username)
     {
         BigInteger encodedUsername = ASCIIToBigInt(username);
         return await actions.create_player(account, new FieldElement(encodedUsername));

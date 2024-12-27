@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Dojo;
 using Dojo.Starknet;
-using dojo_bindings;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class WorldSimulator : MonoBehaviour
@@ -18,7 +16,7 @@ public class WorldSimulator : MonoBehaviour
     public depths_of_dread_GameCoins gameCoins;
     public depths_of_dread_GameObstacles gameObstacles;
     public bool floorEndEvent = false;
-    private readonly Queue<Func<Task>> _taskQueue = new();
+    private readonly Queue<Func<UniTask>> _taskQueue = new();
     private bool _isProcessing = false;
 
     private void Awake()
@@ -103,7 +101,7 @@ public class WorldSimulator : MonoBehaviour
         return Vec2.IsInBounds(moveTarget, gameFloor.size);
     }
 
-    async Task SendMove(Direction direction)
+    async UniTask SendMove(Direction direction)
     {
         Actions actions = dojoWorker.actions;
         Account account = dojoWorker.account;
@@ -180,18 +178,20 @@ public class WorldSimulator : MonoBehaviour
         }
     }
 
-    async Task<bool> ConfirmWorldState()
+    async UniTask<bool> ConfirmWorldState()
     {
         UIManager.instance.DisableJoystick(); // Is enabled again after showing hint modal
+        MovementScript playerMovement = GameObject.FindGameObjectWithTag("GS-CharacterSprite").GetComponent<MovementScript>();
 
-        await Task.Delay(500); // Wait for move animation before modal pops up
+        await UniTask.WaitUntil(() => playerMovement.isMoving == false);
+
         UIManager.instance.SetText("GS-Modal-VerificationText", "Waiting for the server response...");
         UIManager.instance.ShowModal("GS-Modal-Verification");
 
         Debug.Log("Waiting for updated world state...");
         while (_isProcessing || !floorEndEvent)
         {
-            await Task.Yield();
+            await UniTask.Yield();
         }
         Debug.Log("World updated");
 
@@ -234,17 +234,17 @@ public class WorldSimulator : MonoBehaviour
         gameObstacles.instances = dojoWorker.gameEntity.GetComponent<depths_of_dread_GameObstacles>().instances;
     }
 
-    void EnqueueTask(Func<Task> task)
+    void EnqueueTask(Func<UniTask> task)
     {
         _taskQueue.Enqueue(task);
 
         if (!_isProcessing)
         {
-            _ = ProcessQueue();
+            ProcessQueue().Forget();
         }
     }
 
-    async Task ProcessQueue()
+    async UniTask ProcessQueue()
     {
         _isProcessing = true;
 
