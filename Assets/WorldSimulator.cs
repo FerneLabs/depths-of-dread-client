@@ -184,7 +184,8 @@ public class WorldSimulator : MonoBehaviour
     {
         UIManager.instance.DisableJoystick(); // Is enabled again after showing hint modal
 
-        await Task.Delay(500); // Wait for move animation before modal pops up
+        // TODO: Task.Delay doesn't woprk on webgl, find workaround
+        // await Task.Delay(500); // Wait for move animation before modal pops up
         UIManager.instance.SetText("GS-Modal-VerificationText", "Waiting for the server response...");
         UIManager.instance.ShowModal("GS-Modal-Verification");
 
