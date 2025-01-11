@@ -4,6 +4,7 @@ using Dojo.Starknet;
 using UnityEngine;
 using static EncodingService;
 using Cysharp.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 public class DojoWorker : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public class DojoWorker : MonoBehaviour
     public GameObject playerEntity;
     public GameObject gameEntity;
     private int localCurrentFloor = 1; // Temporary workaround until we can use events.
-
+    
     void Start()
     {
         worldManager.synchronizationMaster.OnEntitySpawned.AddListener(HandleSpawn);
@@ -32,7 +33,7 @@ public class DojoWorker : MonoBehaviour
     }
 
     // Temporary workaround until we can use events.
-    void InitLocalCurrentFloor()
+    public void InitLocalCurrentFloor()
     {
         var playerState = playerEntity != null ? playerEntity.GetComponent<depths_of_dread_PlayerState>() : null;
         localCurrentFloor = playerState != null ? playerState.current_floor : 1;
@@ -157,6 +158,7 @@ public class DojoWorker : MonoBehaviour
         }
     }
 
+    // TODO: move all editor logic to different class 
     public async void SimulateControllerConnection(string username)
     {
         provider = new JsonRpcClient(dojoConfig.rpcUrl);
@@ -202,6 +204,21 @@ public class DojoWorker : MonoBehaviour
         }
     }
 
+    public async void EndGame()
+    {
+        await actions.end_game(account);
+        UIManager.instance.HandleExitGame();
+    }
+
+    // End editor only logic
+
+    public void Move(int direction)
+    {
+        Direction dir = (Direction)Direction.FromIndex(typeof(Direction), direction);
+        if (!WorldSimulator.instance.CanMove(dir)) { return; }
+        WorldSimulator.instance.SimulateMove(dir);
+    }
+
     private bool IsGameOngoing()
     {
         GameObject[] entities = worldManager.Entities();
@@ -214,20 +231,6 @@ public class DojoWorker : MonoBehaviour
             }
         }
         return false;
-    }
-
-
-    public async void EndGame()
-    {
-        await actions.end_game(account);
-        UIManager.instance.HandleExitGame();
-    }
-
-    public void Move(int direction)
-    {
-        Direction dir = (Direction)Direction.FromIndex(typeof(Direction), direction);
-        if (!WorldSimulator.instance.CanMove(dir)) { return; }
-        WorldSimulator.instance.SimulateMove(dir);
     }
 
     void OnPlayerDataUpdate()

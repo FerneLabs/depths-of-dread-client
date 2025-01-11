@@ -87,7 +87,6 @@ public class UIManager : MonoBehaviour
         SetText($"LB-UsernameText", "connect");
     }
 
-    // TODO find way to call this from editor callback
     public async void HandleNewFloor()
     {
         await dojoWorker.SyncLocalEntities();
