@@ -217,6 +217,15 @@ public class UIManager : MonoBehaviour
         ShowModal("GS-Modal-Error");
     }
 
+    public void ErrorCloseEffect() {
+        if (ScreenManager.instance.currentScreen == "GameOverlay") {
+            HandleExitGame();
+            dojoWorker.EndGame();
+        } else {
+            HideModal("GS-Modal-Error");
+        }
+    }
+
     public async void HandleGameover()
     {
         await dojoWorker.SyncLocalEntities();

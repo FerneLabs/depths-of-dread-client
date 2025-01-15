@@ -189,7 +189,7 @@ public class DojoWorker : MonoBehaviour
         return await actions.create_player(account, new FieldElement(encodedUsername));
     }
 
-    public async void CreateGame()
+    public async void SimulateCreateGame()
     {
         if (account == null)
         {
@@ -219,7 +219,7 @@ public class DojoWorker : MonoBehaviour
         WorldSimulator.instance.SimulateMove(dir);
     }
 
-    private bool IsGameOngoing()
+    public bool IsGameOngoing()
     {
         GameObject[] entities = worldManager.Entities();
         foreach (GameObject entity in entities)

@@ -32,4 +32,10 @@ mergeInto(LibraryManager.library, {
 
         window.parent.window.WebGLMessage("ExecuteCreatePlayer", "");
     },
+    ExecuteCreateGame: function () {
+        console.log(`[JSLIB] Calling ExecuteCreateGame`);
+        //if (!LibraryManager.library.InternalMiddlewareReady()) return;
+
+        window.parent.window.WebGLMessage("ExecuteCreateGame", "");
+    },
 });

@@ -11,6 +11,11 @@ public struct AccountData
     public string rpc;
 }
 
+public struct ErrorData
+{
+    public string message;
+}
+
 public class JSMessenger : MonoBehaviour
 {
     public WorldManager worldManager;
@@ -26,6 +31,8 @@ public class JSMessenger : MonoBehaviour
     private static extern void ClearSession();
     [DllImport("__Internal")]
     private static extern void ExecuteCreatePlayer();
+    [DllImport("__Internal")]
+    private static extern void ExecuteCreateGame();
 
     void Start()
     {
@@ -33,6 +40,12 @@ public class JSMessenger : MonoBehaviour
 #if UNITY_WEBGL && !UNITY_EDITOR
         WebGLReady();
 #endif
+    }
+
+    public void DisplayError(string payload)
+    {
+        ErrorData errorData = JsonConvert.DeserializeObject<ErrorData>(payload);
+        UIManager.instance.HandleError(errorData.message);
     }
 
     public void OpenConnection()
@@ -76,6 +89,24 @@ public class JSMessenger : MonoBehaviour
 
         await dojoWorker.SyncLocalEntities();
         Debug.Log($"Registering player {accountData.username}  |  {accountData.address}");
+    }
+
+    public void CreateGame()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        if (dojoWorker.account == null)
+        {
+            OpenConnectionPage();
+            return;
+        }
+
+        if (!dojoWorker.IsGameOngoing())
+        {
+            ExecuteCreateGame();
+        }
+#else
+        dojoWorker.SimulateCreateGame();
+#endif
     }
 
     /// <summary>
